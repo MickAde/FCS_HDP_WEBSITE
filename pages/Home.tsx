@@ -104,13 +104,13 @@ const Home: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="text-center lg:text-left">
               <span className="inline-block py-2 px-6 rounded-full bg-primary/20 text-emerald-300 text-xs font-bold tracking-[0.2em] uppercase mb-8 backdrop-blur-md border border-emerald-400/20">
-                🙌 Fellowship of Christian Students (FCS)
+                Fellowship of Christian Students (FCS)
               </span>
               <h1 className="text-5xl md:text-7xl font-poppins font-black leading-tight mb-8">
                 Welcome to <span className="text-primary">His Dwelling Place</span>.
               </h1>
               <p className="text-indigo-100/80 text-lg md:text-xl mb-12 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
-                Welcome to your spiritual home at Futminna. We are a Christ-centered community dedicated to raising leaders of integrity, excellence, and unwavering faith.
+                Welcome to your spiritual home at FUTMINNA. We are a Christ-centered community dedicated to raising leaders of integrity, excellence, and unwavering faith.
               </p>
               
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] mb-12 text-left relative overflow-hidden max-w-lg mx-auto lg:mx-0 shadow-2xl">
@@ -140,7 +140,7 @@ const Home: React.FC = () => {
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
                   />
                   <div className="bg-primary/90 backdrop-blur-md p-6 rounded-[2.5rem] text-white">
-                    <p className="text-2xl font-black mb-1">20+</p>
+                    <p className="text-2xl font-black mb-1">10</p>
                     <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Ministry Units</p>
                   </div>
                 </div>
@@ -291,7 +291,7 @@ const Home: React.FC = () => {
             <Cross size={48} />
           </div>
           <h2 className="text-4xl md:text-6xl font-poppins font-black text-indigo-950 dark:text-white mb-8">Ready to Walk with Us?</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-12 text-xl max-w-xl mx-auto">Whether you are a seeker, a new believer, or looking to deepen your walk, FCS is your family at Futminna.</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-12 text-xl max-w-xl mx-auto">Whether you are a seeker, a new believer, or looking to deepen your walk, FCS is your family at FUTMINNA.</p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link to="/contact" className="bg-primary text-white px-12 py-5 rounded-2xl font-bold hover:scale-105 transition-all shadow-2xl shadow-emerald-900/20">
               Talk to a Fellowship Leader

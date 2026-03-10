@@ -13,24 +13,11 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center space-x-3 mb-6">
-              <div className="relative w-8 h-8">
-                <img 
-                  src="https://www.facebook.com/photo/?fbid=850097043824206&set=a.549911547176092" 
-                  alt="FCS Logo" 
-                  className="w-full h-full object-contain rounded-full"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).classList.add('hidden');
-                    const parent = (e.target as HTMLImageElement).parentElement;
-                    if (parent) {
-                      const fallback = parent.querySelector('.fallback-logo-footer');
-                      if (fallback) fallback.classList.remove('hidden');
-                    }
-                  }}
-                />
-                <div className="fallback-logo-footer hidden absolute inset-0 bg-primary rounded flex items-center justify-center text-white font-bold text-sm">
-                  F
-                </div>
-              </div>
+              <img 
+                src="/assets/icon.png" 
+                alt="FCS Logo" 
+                className="w-8 h-8 object-contain"
+              />
               <span className="text-xl font-poppins font-bold text-indigo-900 dark:text-white">FCS Futminna</span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-6">

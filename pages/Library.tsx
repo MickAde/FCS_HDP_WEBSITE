@@ -114,7 +114,7 @@ const Library: React.FC = () => {
                 <div className="flex-shrink-0 w-8 h-8 bg-indigo-900 dark:bg-primary text-white rounded-full flex items-center justify-center font-bold">2</div>
                 <div>
                   <h4 className="font-bold text-indigo-900 dark:text-white mb-2">Allow Unknown Sources</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Open your Phone Settings > Security and enable "Install from Unknown Sources" or "Allow from this source" for your browser.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Open your Phone Settings {'>'} Security and enable "Install from Unknown Sources" or "Allow from this source" for your browser.</p>
                 </div>
               </div>
 
