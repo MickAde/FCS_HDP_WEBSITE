@@ -1,0 +1,8 @@
+{
+  "name": "Copy of FCS Futminna",
+  "description": "A vibrant student fellowship community at Futminna featuring a blog and an AI-powered e-test simulator to help freshmen excel.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
