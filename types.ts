@@ -1,5 +1,22 @@
 
-export interface BlogPost {
+export interface Profile {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  level: '100L' | '200L' | '300L' | '400L' | '500L' | 'Alumni' | 'Staff' | null;
+  unit: string | null;
+  role: 'member' | 'leader' | 'admin';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  profile: Profile | null;
+}
+
+
   id: string;
   title: string;
   excerpt: string;

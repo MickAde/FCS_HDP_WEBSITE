@@ -48,7 +48,7 @@ const StudyBuddy: React.FC = () => {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       if (!chatInstance.current) {
         chatInstance.current = ai.chats.create({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-2.0-flash',
           config: {
             systemInstruction: "You are 'FCS Study Buddy', an AI assistant for students at Futminna University, specifically for the FCS (Fellowship of Christian Students) community. You are friendly, encouraging, knowledgeable about academic life, and provide guidance that aligns with Christian values. You help with study techniques, time management, and spiritual encouragement. Keep responses concise and supportive.",
           },

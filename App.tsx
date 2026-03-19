@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 // Fixed: Using star import for react-router-dom to resolve missing named exports issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
 import { 
@@ -8,7 +10,10 @@ import {
   ChevronDown,
   Sparkles,
   Sun,
-  Moon
+  Moon,
+  LogOut,
+  User,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 
 // Components
@@ -28,10 +33,12 @@ import SOD from './pages/SOD';
 import SODRegister from './pages/SODRegister';
 import StudyBuddy from './pages/StudyBuddy';
 import Contact from './pages/Contact';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Footer from './components/Footer';
 
 // Fixed: Destructuring from star import to bypass named export resolution errors
-const { HashRouter, Routes, Route, Link, useLocation } = ReactRouterDOM;
+const { HashRouter, Routes, Route, Link, useLocation, Navigate } = ReactRouterDOM;
 const Router = HashRouter;
 
 const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDarkMode: () => void }) => {
@@ -75,7 +82,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-3">
+            <Link to="/" className="flex items-center space-x-3" onClick={() => setIsOpen(false)}>
               <img 
                 src="/assets/icon.png" 
                 alt="FCS Logo" 
@@ -144,12 +151,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
-            <Link 
-              to="/simulator" 
-              className="bg-primary text-white px-5 py-2 rounded-full text-sm font-medium hover:opacity-90 transition shadow-lg shadow-emerald-100 dark:shadow-none"
-            >
-              Get Started
-            </Link>
+            <AuthButtons />
           </div>
 
           <div className="md:hidden flex items-center space-x-2">
@@ -198,16 +200,121 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
             ))}
           </div>
           
-          <Link
-            to="/simulator"
-            onClick={() => setIsOpen(false)}
-            className="block py-3 mt-4 bg-primary text-white text-center rounded-xl font-bold shadow-lg"
-          >
+          <Link to="/simulator" onClick={() => setIsOpen(false)} className="block py-3 mt-4 bg-primary text-white text-center rounded-xl font-bold shadow-lg">
             Try Simulator
           </Link>
+          <MobileAuthButtons setIsOpen={setIsOpen} />
         </div>
       )}
     </nav>
+  );
+};
+
+// Redirect logged-in users away from login/register
+const ProtectedLoginRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (user) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+const AuthButtons = () => {
+  const { user, profile, signOut } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  if (user) {
+    const name = profile?.full_name ?? user.email;
+    const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+
+    return (
+      <div className="relative" ref={ref}>
+        <button onClick={() => setOpen(!open)}
+          className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-gray-200 dark:border-slate-700 hover:border-primary transition-all bg-white dark:bg-slate-800 shadow-sm">
+          {avatarUrl
+            ? <img src={avatarUrl} alt={name} className="w-7 h-7 rounded-full object-cover" />
+            : <div className="w-7 h-7 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">{initials}</div>
+          }
+          <span className="text-sm font-semibold text-indigo-900 dark:text-white max-w-[80px] truncate">
+            {profile?.full_name?.split(' ')[0] ?? 'Member'}
+          </span>
+          <ChevronDown size={14} className={`text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+
+        {open && (
+          <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="px-4 py-3 border-b border-gray-50 dark:border-slate-700">
+              <p className="text-sm font-bold text-indigo-900 dark:text-white truncate">{profile?.full_name ?? 'Member'}</p>
+              <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              {profile?.level && <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-widest text-primary bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">{profile.level}</span>}
+            </div>
+            <button onClick={() => { signOut(); setOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded-b-2xl">
+              <LogOut size={16} /> Sign Out
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <Link to="/login" className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary transition px-3 py-2">
+        Sign In
+      </Link>
+      <Link to="/register" className="bg-primary text-white px-5 py-2 rounded-full text-sm font-medium hover:opacity-90 transition shadow-lg shadow-emerald-100 dark:shadow-none">
+        Join Us
+      </Link>
+    </div>
+  );
+};
+
+const MobileAuthButtons = ({ setIsOpen }: { setIsOpen: (v: boolean) => void }) => {
+  const { user, profile, signOut } = useAuth();
+  if (user) {
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+    const name = profile?.full_name ?? user.email;
+    const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+    return (
+      <div className="mt-2 border-t border-gray-100 dark:border-slate-800 pt-3">
+        <div className="flex items-center gap-3 px-3 py-2 mb-2">
+          {avatarUrl
+            ? <img src={avatarUrl} alt={name} className="w-9 h-9 rounded-full object-cover" />
+            : <div className="w-9 h-9 rounded-full bg-primary text-white text-sm font-bold flex items-center justify-center">{initials}</div>
+          }
+          <div>
+            <p className="text-sm font-bold text-indigo-900 dark:text-white">{profile?.full_name ?? 'Member'}</p>
+            <p className="text-xs text-gray-400 truncate max-w-[180px]">{user.email}</p>
+          </div>
+        </div>
+        <button onClick={() => { signOut(); setIsOpen(false); }}
+          className="w-full flex items-center justify-center gap-2 py-3 border border-red-100 dark:border-red-900/30 text-red-500 rounded-xl font-bold text-sm">
+          <LogOut size={16} /> Sign Out
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-2 flex flex-col gap-2">
+      <Link to="/login" onClick={() => setIsOpen(false)}
+        className="block py-3 border border-gray-200 dark:border-slate-700 text-indigo-900 dark:text-white text-center rounded-xl font-bold text-sm">
+        Sign In
+      </Link>
+      <Link to="/register" onClick={() => setIsOpen(false)}
+        className="block py-3 bg-primary text-white text-center rounded-xl font-bold text-sm">
+        Join Us
+      </Link>
+    </div>
   );
 };
 
@@ -230,6 +337,8 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <ToastProvider>
+      <AuthProvider>
       <div className="min-h-screen flex flex-col bg-[#fcfcfd] dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors">
         <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
         <main className="flex-grow">
@@ -250,10 +359,14 @@ const App: React.FC = () => {
             <Route path="/study-buddy" element={<StudyBuddy />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<ProtectedLoginRoute><Login /></ProtectedLoginRoute>} />
+            <Route path="/register" element={<ProtectedLoginRoute><Register /></ProtectedLoginRoute>} />
           </Routes>
         </main>
         <Footer />
       </div>
+      </AuthProvider>
+      </ToastProvider>
     </Router>
   );
 };

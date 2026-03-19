@@ -64,7 +64,7 @@ const Home: React.FC = () => {
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
+          model: 'gemini-2.0-flash',
           contents: "Generate a short (max 20 words) spiritual quote or scripture-based encouragement for a university student focused on leadership and purpose in Christ. No hashtags.",
         });
         setInsight(response.text || "Your purpose is not accidental. You were chosen to be a light on this campus.");

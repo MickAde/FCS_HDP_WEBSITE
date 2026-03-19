@@ -7,7 +7,7 @@ export const generatePracticeQuestions = async (subject: string, difficulty: str
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.0-flash',
     contents: `Generate 5 multiple-choice practice questions for a ${difficulty} level student on the subject of ${subject}. 
     Provide the response in JSON format. Each question should have a text, four options, an index for the correct answer (0-3), and a brief explanation.`,
     config: {
