@@ -35,6 +35,9 @@ import StudyBuddy from './pages/StudyBuddy';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import AdminBlog from './pages/AdminBlog';
+import AdminUnits from './pages/AdminUnits';
+import AdminActivities from './pages/AdminActivities';
 import Footer from './components/Footer';
 
 // Fixed: Destructuring from star import to bypass named export resolution errors
@@ -210,6 +213,15 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
   );
 };
 
+// Only admins and leaders can access admin routes
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, profile, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (profile?.role !== 'admin' && profile?.role !== 'leader') return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 // Redirect logged-in users away from login/register
 const ProtectedLoginRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -257,6 +269,22 @@ const AuthButtons = () => {
               <p className="text-xs text-gray-400 truncate">{user.email}</p>
               {profile?.level && <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-widest text-primary bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full">{profile.level}</span>}
             </div>
+            {(profile?.role === 'admin' || profile?.role === 'leader') && (
+              <div className="border-b border-gray-50 dark:border-slate-700">
+                <Link to="/admin/blog" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <User size={16} className="text-primary" /> Manage Blog
+                </Link>
+                <Link to="/admin/units" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <User size={16} className="text-primary" /> Manage Units
+                </Link>
+                <Link to="/admin/activities" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <User size={16} className="text-primary" /> Manage Activities
+                </Link>
+              </div>
+            )}
             <button onClick={() => { signOut(); setOpen(false); }}
               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors rounded-b-2xl">
               <LogOut size={16} /> Sign Out
@@ -361,6 +389,9 @@ const App: React.FC = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<ProtectedLoginRoute><Login /></ProtectedLoginRoute>} />
             <Route path="/register" element={<ProtectedLoginRoute><Register /></ProtectedLoginRoute>} />
+            <Route path="/admin/blog" element={<AdminRoute><AdminBlog /></AdminRoute>} />
+            <Route path="/admin/units" element={<AdminRoute><AdminUnits /></AdminRoute>} />
+            <Route path="/admin/activities" element={<AdminRoute><AdminActivities /></AdminRoute>} />
           </Routes>
         </main>
         <Footer />

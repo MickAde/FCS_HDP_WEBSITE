@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -9,34 +9,67 @@ import {
   Send,
   Calendar,
   Zap,
-  Check
+  Check,
+  Loader,
+  Theater, 
+  Users, 
+  CalendarDays, 
+  Wrench, 
+  Music, 
+  Camera, 
+  Mic2, 
+  HeartHandshake,
+  ShieldCheck,
+  Flame,
+  Utensils,
+  LucideIcon
 } from 'lucide-react';
-import { unitsData } from './Units';
+import { dbService, UnitRow } from '../services/dbService';
 
 const { useParams, useNavigate } = ReactRouterDOM;
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Theater, Users, CalendarDays, Wrench, Music, Camera,
+  Mic2, HeartHandshake, ShieldCheck, Zap, Flame, Utensils,
+};
 
 const UnitDetail: React.FC = () => {
   const { unitId } = useParams<{ unitId: string }>();
   const navigate = useNavigate();
-  const unit = unitsData.find(u => u.id === unitId);
+  const [unit, setUnit] = useState<UnitRow | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
 
-  if (!unit) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 transition-colors">
-        <h2 className="text-2xl font-bold text-indigo-900 dark:text-white mb-4">Unit not found</h2>
-        <button onClick={() => navigate('/units')} className="text-primary font-bold hover:underline">Back to Units</button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!unitId) return;
+    dbService.getUnits().then(({ data }) => {
+      if (data) {
+        const found = (data as UnitRow[]).find(u => u.id === unitId);
+        if (found) setUnit(found);
+      }
+      setLoading(false);
+    });
+  }, [unitId]);
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900">
+      <Loader size={32} className="animate-spin text-primary" />
+    </div>
+  );
+
+  if (!unit) return (
+    <div className="min-h-[60vh] flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 transition-colors">
+      <h2 className="text-2xl font-bold text-indigo-900 dark:text-white mb-4">Unit not found</h2>
+      <button onClick={() => navigate('/units')} className="text-primary font-bold hover:underline">Back to Units</button>
+    </div>
+  );
+
+  const Icon = ICON_MAP[unit.icon] ?? Users;
 
   const handleRegister = () => {
-    // No longer requiring login to register
     setIsRegistered(true);
     setTimeout(() => setIsRegistered(false), 3000);
   };
-
-  const Icon = unit.icon;
 
   return (
     <div className="bg-gray-50 dark:bg-slate-900 min-h-screen transition-colors">
@@ -74,32 +107,38 @@ const UnitDetail: React.FC = () => {
                 <Info size={24} className="mr-3 text-primary" /> About the Unit
               </h2>
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-lg mb-8">
-                {unit.longDescription}
+                {unit.long_description ?? unit.description}
               </p>
               
-              <h3 className="text-xl font-bold text-indigo-900 dark:text-white mb-6 uppercase tracking-wider text-sm">Activities & Impact</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {unit.activities.map((activity, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-4 bg-emerald-50/30 dark:bg-emerald-950/10 rounded-2xl border border-emerald-50 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
-                    <CheckCircle2 size={18} className="text-primary mt-1 flex-shrink-0" />
-                    <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">{activity}</span>
+              {unit.activities.length > 0 && (
+                <>
+                  <h3 className="text-sm font-bold text-indigo-900 dark:text-white mb-6 uppercase tracking-wider">Activities & Impact</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {unit.activities.map((activity, idx) => (
+                      <div key={idx} className="flex items-start gap-3 p-4 bg-emerald-50/30 dark:bg-emerald-950/10 rounded-2xl border border-emerald-50 dark:border-emerald-900/50 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors">
+                        <CheckCircle2 size={18} className="text-primary mt-1 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300 text-sm font-medium">{activity}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              )}
             </section>
 
-            <section className="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
-              <h2 className="text-2xl font-bold text-indigo-900 dark:text-white mb-6 flex items-center">
-                <Clock size={24} className="mr-3 text-primary" /> Meeting Schedule
-              </h2>
-              <div className="flex items-center gap-4 bg-emerald-50/50 dark:bg-emerald-950/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 shadow-sm">
-                <Calendar className="text-primary" size={32} />
-                <div>
-                  <p className="text-indigo-900 dark:text-white font-bold text-lg">{unit.meetings}</p>
-                  <p className="text-emerald-700 dark:text-emerald-400 text-sm font-medium">Spiritual growth through service.</p>
+            {unit.meetings && (
+              <section className="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
+                <h2 className="text-2xl font-bold text-indigo-900 dark:text-white mb-6 flex items-center">
+                  <Clock size={24} className="mr-3 text-primary" /> Meeting Schedule
+                </h2>
+                <div className="flex items-center gap-4 bg-emerald-50/50 dark:bg-emerald-950/20 p-6 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 shadow-sm">
+                  <Calendar className="text-primary" size={32} />
+                  <div>
+                    <p className="text-indigo-900 dark:text-white font-bold text-lg">{unit.meetings}</p>
+                    <p className="text-emerald-700 dark:text-emerald-400 text-sm font-medium">Spiritual growth through service.</p>
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
           </div>
 
           {/* Sidebar */}
@@ -107,13 +146,13 @@ const UnitDetail: React.FC = () => {
             <div className="bg-primary text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden shadow-emerald-900/20 dark:shadow-none">
               <div className="relative z-10">
                 <h3 className="text-xl font-bold mb-4">How to Register</h3>
-                <p className="text-emerald-50 dark:text-emerald-100 text-sm mb-6 leading-relaxed">
-                  {unit.requirements}
+                <p className="text-emerald-50 text-sm mb-6 leading-relaxed">
+                  {unit.requirements ?? 'Contact the unit coordinator to join.'}
                 </p>
                 <button 
                   onClick={handleRegister}
                   className={`w-full py-4 rounded-2xl font-bold hover:scale-[1.02] transition shadow-lg flex items-center justify-center gap-2 ${
-                    isRegistered ? 'bg-emerald-400 text-white' : 'bg-white dark:bg-slate-100 text-primary'
+                    isRegistered ? 'bg-emerald-400 text-white' : 'bg-white text-primary'
                   }`}
                 >
                   {isRegistered ? <><Check size={18} /> Application Sent</> : <><Send size={18} /> Register for this Unit</>}
@@ -127,15 +166,13 @@ const UnitDetail: React.FC = () => {
 
             <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
               <h3 className="text-lg font-bold text-indigo-900 dark:text-white mb-6">Unit Leaders</h3>
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700">
-                    <img src={`https://picsum.photos/seed/${unit.id}lead/100`} alt="leader" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-indigo-900 dark:text-white">Unit Coordinator</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect via fellowship app</p>
-                  </div>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700">
+                  <img src={`https://picsum.photos/seed/${unit.id}lead/100`} alt="leader" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-indigo-900 dark:text-white">Unit Coordinator</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect via fellowship app</p>
                 </div>
               </div>
             </div>

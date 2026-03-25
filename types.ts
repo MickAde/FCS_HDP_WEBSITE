@@ -16,7 +16,7 @@ export interface AuthUser {
   profile: Profile | null;
 }
 
-
+export interface BlogPost {
   id: string;
   title: string;
   excerpt: string;
@@ -24,7 +24,7 @@ export interface AuthUser {
   author: string;
   date: string;
   category: string;
-  imageUrl: string;
+  image_url: string | null;
 }
 
 export interface Question {
