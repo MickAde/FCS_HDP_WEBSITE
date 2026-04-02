@@ -60,8 +60,16 @@ const Blog: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search articles..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
+              className="w-full pl-10 pr-8 py-2 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
             />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
@@ -72,7 +80,17 @@ const Blog: React.FC = () => {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-gray-300 dark:border-slate-700">
             <FileText size={40} className="mx-auto text-gray-300 dark:text-slate-600 mb-3" />
-            <p className="text-gray-500 dark:text-gray-400">No articles found.</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">
+              {search ? `No results for "${search}"` : 'No articles found in this category.'}
+            </p>
+            {(search || activeCategory !== 'All') && (
+              <button
+                onClick={() => { setSearch(''); setActiveCategory('All'); }}
+                className="text-primary font-bold text-sm hover:underline mt-1"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

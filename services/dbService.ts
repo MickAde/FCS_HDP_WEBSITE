@@ -16,12 +16,38 @@ export interface UnitRow {
   created_at?: string;
 }
 
+export interface SodDepartmentRow {
+  id: string;
+  name: string;
+  description: string;
+  teachers: string[];
+  fee: number;
+  image_url: string | null;
+  created_at?: string;
+}
+
+export interface SodRegistrationRow {
+  id: string;
+  department_id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  level: string;
+  faculty_dept: string;
+  paystack_ref: string | null;
+  payment_status: 'pending' | 'paid';
+  student_id: string;
+  photo_url: string | null;
+  created_at?: string;
+}
+
 export interface ActivityRow {
   id: string;
   title: string;
   description: string;
   long_description: string | null;
   date: string;
+  end_date: string | null;
   time: string;
   location: string;
   type: 'General' | 'Workshop' | 'Outreach' | 'Prayer';
@@ -83,6 +109,11 @@ export const dbService = {
     return { data, error };
   },
 
+  getUnit: async (id: string) => {
+    const { data, error } = await supabase.from('units').select('*').eq('id', id).single();
+    return { data, error };
+  },
+
   createUnit: async (unit: Omit<UnitRow, 'created_at'>) => {
     const { data, error } = await supabase.from('units').insert([unit]).select().single();
     return { data, error };
@@ -122,6 +153,46 @@ export const dbService = {
   deleteActivity: async (id: string) => {
     const { error } = await supabase.from('activities').delete().eq('id', id);
     return { error };
+  },
+
+  // SOD Departments
+  getSodDepartments: async () => {
+    const { data, error } = await supabase.from('sod_departments').select('*').order('created_at', { ascending: true });
+    return { data: data as SodDepartmentRow[], error };
+  },
+
+  createSodDepartment: async (dept: Omit<SodDepartmentRow, 'id' | 'created_at'>) => {
+    const { data, error } = await supabase.from('sod_departments').insert([dept]).select().single();
+    return { data: data as SodDepartmentRow, error };
+  },
+
+  updateSodDepartment: async (id: string, updates: Partial<Omit<SodDepartmentRow, 'id' | 'created_at'>>) => {
+    const { data, error } = await supabase.from('sod_departments').update(updates).eq('id', id).select().single();
+    return { data: data as SodDepartmentRow, error };
+  },
+
+  deleteSodDepartment: async (id: string) => {
+    const { error } = await supabase.from('sod_departments').delete().eq('id', id);
+    return { error };
+  },
+
+  // SOD Registrations
+  getSodRegistrations: async () => {
+    const { data, error } = await supabase
+      .from('sod_registrations')
+      .select('*, sod_departments(name)')
+      .order('created_at', { ascending: false });
+    return { data, error };
+  },
+
+  createSodRegistration: async (reg: Omit<SodRegistrationRow, 'id' | 'created_at'>) => {
+    const { data, error } = await supabase.from('sod_registrations').insert([reg]).select().single();
+    return { data: data as SodRegistrationRow, error };
+  },
+
+  updateSodRegistration: async (id: string, updates: Partial<SodRegistrationRow>) => {
+    const { data, error } = await supabase.from('sod_registrations').update(updates).eq('id', id).select().single();
+    return { data: data as SodRegistrationRow, error };
   },
 
   // Sermons

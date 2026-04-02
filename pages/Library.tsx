@@ -34,7 +34,7 @@ const Library: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <a 
-              href="/fcs-library-v1.apk" 
+              href="https://github.com/MickAde/FCS-LIB-REACT-NATIVE/releases/download/v1.0.0/FCS.E-Library_v1.0.0.apk" 
               download
               className="bg-primary text-white px-10 py-5 rounded-2xl font-bold hover:scale-105 transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3"
             >
@@ -44,7 +44,7 @@ const Library: React.FC = () => {
               Learn More <ArrowRight size={20} />
             </button>
           </div>
-          <p className="mt-6 text-sm text-indigo-200/60 italic">Version 1.2.0 • Last updated: Oct 2024 • 18.5 MB</p>
+          <p className="mt-6 text-sm text-indigo-200/60 italic">Version 1.0.0 • Last updated: Jul 2025</p>
         </div>
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary/20 blur-3xl rounded-full"></div>
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 blur-3xl rounded-full"></div>

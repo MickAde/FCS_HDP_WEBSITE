@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Calendar, Clock, MapPin, CheckCircle2,
-  Share2, Bell, CalendarDays, ArrowRight, Zap, Star, Loader, AlertCircle
+  Share2, CalendarDays, ArrowRight, Zap, Star, Loader, AlertCircle
 } from 'lucide-react';
 import { dbService, ActivityRow } from '../services/dbService';
 
@@ -46,6 +46,42 @@ const ActivityDetail: React.FC = () => {
     </div>
   );
 
+  const getGoogleCalendarUrl = () => {
+    const base = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
+    const title = `&text=${encodeURIComponent(event.title)}`;
+    const details = `&details=${encodeURIComponent(event.long_description || event.description)}`;
+    const location = `&location=${encodeURIComponent(event.location)}`;
+    const startISO = `${event.date}T${event.time}:00`;
+    const start = startISO.replace(/[-:]/g, '').slice(0, 15);
+    let end: string;
+    if (event.end_date) {
+      // End date: use end_date at same time
+      const endISO = `${event.end_date}T${event.time}:00`;
+      end = endISO.replace(/[-:]/g, '').slice(0, 15);
+    } else {
+      const endDate = new Date(`${event.date}T${event.time}:00`);
+      endDate.setHours(endDate.getHours() + 2);
+      end = endDate.toISOString().replace(/[-:]/g, '').slice(0, 15);
+    }
+    const dates = `&dates=${start}/${end}`;
+    return `${base}${title}${details}${location}${dates}`;
+  };
+
+  // Format date for display e.g. "2025-10-25" -> "Oct 25, 2025"
+  const formatDate = (d: string) => {
+    const parsed = new Date(d);
+    return isNaN(parsed.getTime()) ? d : parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Format time for display e.g. "16:00" -> "4:00 PM"
+  const formatTime = (t: string) => {
+    const [h, m] = t.split(':').map(Number);
+    if (isNaN(h)) return t;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hour = h % 12 || 12;
+    return `${hour}:${String(m).padStart(2, '0')} ${ampm}`;
+  };
+
   return (
     <div className="bg-gray-50 dark:bg-slate-900 min-h-screen pb-20 transition-colors duration-300">
       {/* Hero */}
@@ -84,8 +120,14 @@ const ActivityDetail: React.FC = () => {
             {/* Quick Info */}
             <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-slate-700 grid grid-cols-1 md:grid-cols-3 gap-6 transition-colors">
               {[
-                { icon: Calendar, label: 'Date', value: event.date },
-                { icon: Clock, label: 'Time', value: event.time },
+                {
+                  icon: Calendar,
+                  label: 'Date',
+                  value: event.end_date
+                    ? `${formatDate(event.date)} – ${formatDate(event.end_date)}`
+                    : formatDate(event.date),
+                },
+                { icon: Clock, label: 'Time', value: formatTime(event.time) },
                 { icon: MapPin, label: 'Location', value: event.location },
               ].map(({ icon: Icon, label, value }) => (
                 <div key={label} className="flex items-center gap-4">
@@ -134,32 +176,20 @@ const ActivityDetail: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            <div className="bg-primary text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden shadow-emerald-900/20">
-              <div className="relative z-10 text-center">
-                <Bell size={32} className="mx-auto mb-6 text-white" />
-                <h3 className="text-2xl font-bold mb-4">Register Now</h3>
-                <p className="text-emerald-50 text-sm mb-8 leading-relaxed">
-                  Join us for this life-transforming session. Registration helps us plan resources and logistics effectively.
-                </p>
-                <button className="w-full bg-white text-primary font-bold py-4 rounded-2xl hover:scale-[1.02] active:scale-95 transition shadow-lg flex items-center justify-center gap-2">
-                  Count Me In <ArrowRight size={18} />
-                </button>
-                <p className="text-[10px] text-emerald-100 mt-6 font-bold uppercase tracking-widest opacity-80">
-                  Open to all 100-500 level students
-                </p>
-              </div>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -mr-16 -mt-16" />
-            </div>
-
             <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
               <div className="flex items-center gap-3 mb-6">
                 <CalendarDays className="text-primary" size={24} />
                 <h3 className="text-lg font-bold text-indigo-900 dark:text-white">Save the Date</h3>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Import this event to your personal calendar to receive automatic reminders.</p>
-              <button className="w-full border border-emerald-100 dark:border-emerald-900/50 text-primary px-6 py-3 rounded-xl font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all text-sm flex items-center justify-center gap-2">
-                Add to Calendar
-              </button>
+              <a
+                href={getGoogleCalendarUrl()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full border border-emerald-100 dark:border-emerald-900/50 text-primary px-6 py-3 rounded-xl font-bold hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-all text-sm flex items-center justify-center gap-2"
+              >
+                Add to Google Calendar
+              </a>
             </div>
 
             <div className="bg-gradient-to-br from-indigo-900 to-indigo-950 dark:from-slate-950 dark:to-slate-900 p-8 rounded-[2.5rem] border border-white/10 text-center text-white relative overflow-hidden">

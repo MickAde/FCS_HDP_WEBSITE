@@ -135,6 +135,10 @@ const Activities: React.FC = () => {
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400 mt-2">
+                            <div className="flex items-center">
+                              <Calendar size={14} className="mr-1.5 text-primary" />
+                              {event.end_date ? `${event.date} – ${event.end_date}` : event.date}
+                            </div>
                             <div className="flex items-center"><Clock size={14} className="mr-1.5 text-primary" /> {event.time}</div>
                             <div className="flex items-center"><MapPin size={14} className="mr-1.5 text-primary" /> {event.location}</div>
                           </div>

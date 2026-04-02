@@ -91,6 +91,60 @@ CREATE TABLE events (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Activities Table
+CREATE TABLE activities (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  long_description TEXT,
+  date DATE NOT NULL,
+  end_date DATE,
+  time TEXT NOT NULL,
+  location TEXT NOT NULL,
+  type TEXT CHECK (type IN ('General','Workshop','Outreach','Prayer')) DEFAULT 'General',
+  featured BOOLEAN DEFAULT false,
+  image_url TEXT,
+  expectations TEXT[] DEFAULT '{}',
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- SOD Departments Table
+CREATE TABLE sod_departments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  teachers TEXT[] DEFAULT '{}',
+  fee INTEGER NOT NULL DEFAULT 0,
+  image_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- SOD Registrations Table
+CREATE TABLE sod_registrations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  department_id UUID NOT NULL REFERENCES sod_departments(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  level TEXT NOT NULL,
+  faculty_dept TEXT NOT NULL,
+  paystack_ref TEXT,
+  payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN ('pending','paid')),
+  student_id TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE sod_departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sod_registrations ENABLE ROW LEVEL SECURITY;
+
+-- SOD RLS
+CREATE POLICY "Public read sod_departments" ON sod_departments FOR SELECT USING (true);
+CREATE POLICY "Admins manage sod_departments" ON sod_departments FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Anyone can register" ON sod_registrations FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users view own registration" ON sod_registrations FOR SELECT USING (true);
+CREATE POLICY "Admins manage registrations" ON sod_registrations FOR ALL USING (auth.role() = 'authenticated');
+
 -- Enable Row Level Security
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;

@@ -11,6 +11,7 @@ const emptyForm = {
   description: '',
   long_description: '',
   date: '',
+  end_date: '',
   time: '',
   location: '',
   type: 'General' as ActivityRow['type'],
@@ -59,6 +60,7 @@ const AdminActivities: React.FC = () => {
       description: a.description,
       long_description: a.long_description ?? '',
       date: a.date,
+      end_date: a.end_date ?? '',
       time: a.time,
       location: a.location,
       type: a.type,
@@ -79,6 +81,7 @@ const AdminActivities: React.FC = () => {
       ...form,
       image_url: form.image_url || null,
       long_description: form.long_description || null,
+      end_date: form.end_date || null,
       expectations: form.expectations.filter(e => e.trim() !== ''),
     };
 
@@ -209,23 +212,37 @@ const AdminActivities: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Date *</label>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Start Date *</label>
                   <input
+                    type="date"
                     value={form.date}
                     onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                     className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
-                    placeholder="Oct 25, 2025"
                   />
                 </div>
                 <div>
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                    End Date <span className="normal-case font-normal text-gray-400">(optional — for multi-day events)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={form.end_date}
+                    min={form.date || undefined}
+                    onChange={e => setForm(f => ({ ...f, end_date: e.target.value }))}
+                    className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Time *</label>
                   <input
+                    type="time"
                     value={form.time}
                     onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
                     className="w-full bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
-                    placeholder="4:00 PM"
                   />
                 </div>
                 <div>

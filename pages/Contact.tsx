@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import emailjs from '@emailjs/browser';
+import { supabase } from '../lib/supabase';
 import { 
   Mail, 
   MessageSquare, 
@@ -17,16 +19,36 @@ import {
 import { Link } from 'react-router-dom';
 
 const Contact: React.FC = () => {
-  const [formState, setFormState] = useState<'idle' | 'loading' | 'success'>('idle');
-  const [category, setCategory] = useState('General Inquiry');
+  const [formState, setFormState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [category, setCategory] = useState('General');
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formRef.current) return;
     setFormState('loading');
-    // Simulate API call
-    setTimeout(() => {
+
+    const data = new FormData(formRef.current);
+    const name = data.get('from_name') as string;
+    const email = data.get('from_email') as string;
+    const subject = data.get('subject') as string;
+    const message = data.get('message') as string;
+
+    try {
+      const [{ error }] = await Promise.all([
+        supabase.from('contact_messages').insert({ name, email, subject, message, category }),
+        emailjs.sendForm(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+          formRef.current,
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        ),
+      ]);
+      if (error) throw error;
       setFormState('success');
-    }, 1500);
+    } catch {
+      setFormState('error');
+    }
   };
 
   if (formState === 'success') {
@@ -134,7 +156,7 @@ const Contact: React.FC = () => {
                 <p className="text-gray-500 dark:text-gray-400">Please choose a category so we can route your message correctly.</p>
               </div>
               
-              <form onSubmit={handleSubmit} className="p-8 md:p-12 space-y-8">
+              <form ref={formRef} onSubmit={handleSubmit} className="p-8 md:p-12 space-y-8">
                 {/* Category Selection */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {[
@@ -159,26 +181,33 @@ const Contact: React.FC = () => {
                   ))}
                 </div>
 
+                {/* Hidden field for EmailJS category */}
+                <input type="hidden" name="category" value={category} />
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Your Name</label>
-                    <input required type="text" placeholder="John Doe" className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all dark:text-white" />
+                    <input required name="from_name" type="text" placeholder="John Doe" className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all dark:text-white" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Email Address</label>
-                    <input required type="email" placeholder="john@example.com" className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all dark:text-white" />
+                    <input required name="from_email" type="email" placeholder="john@example.com" className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all dark:text-white" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Subject</label>
-                  <input required type="text" placeholder={`Inquiry regarding ${category.toLowerCase()}...`} className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all dark:text-white" />
+                  <input required name="subject" type="text" placeholder={`Inquiry regarding ${category.toLowerCase()}...`} className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all dark:text-white" />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-gray-700 dark:text-gray-300 ml-1">Message</label>
-                  <textarea required rows={5} placeholder="How can we help you today?" className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all resize-none dark:text-white"></textarea>
+                  <textarea required name="message" rows={5} placeholder="How can we help you today?" className="w-full px-6 py-4 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-slate-950 transition-all resize-none dark:text-white"></textarea>
                 </div>
+
+                {formState === 'error' && (
+                  <p className="text-red-500 text-sm text-center">Something went wrong. Please try again.</p>
+                )}
 
                 <button 
                   type="submit" 

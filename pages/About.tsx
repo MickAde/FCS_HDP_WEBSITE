@@ -129,7 +129,7 @@ const About: React.FC = () => {
       </section>
 
       {/* Team - Now featuring 24 members */}
-      <section className="py-24">
+      <section id="team" className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-indigo-900 dark:text-white">The Hearts Behind FCS Futminna</h2>

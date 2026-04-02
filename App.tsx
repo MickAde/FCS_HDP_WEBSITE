@@ -31,6 +31,7 @@ import Activities from './pages/Activities';
 import ActivityDetail from './pages/ActivityDetail';
 import SOD from './pages/SOD';
 import SODRegister from './pages/SODRegister';
+import SODCard from './pages/SODCard';
 import StudyBuddy from './pages/StudyBuddy';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -38,6 +39,7 @@ import Register from './pages/Register';
 import AdminBlog from './pages/AdminBlog';
 import AdminUnits from './pages/AdminUnits';
 import AdminActivities from './pages/AdminActivities';
+import AdminSOD from './pages/AdminSOD';
 import Footer from './components/Footer';
 
 // Fixed: Destructuring from star import to bypass named export resolution errors
@@ -47,13 +49,18 @@ const Router = HashRouter;
 const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDarkMode: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSodDropdownOpen, setIsSodDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const sodDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (sodDropdownRef.current && !sodDropdownRef.current.contains(event.target as Node)) {
+        setIsSodDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -66,8 +73,13 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
     { name: 'Blog', path: '/blog' },
     { name: 'Units', path: '/units' },
     { name: 'Activities', path: '/activities' },
-    { name: 'SOD', path: '/sod' },
     { name: 'Contact', path: '/contact' },
+  ];
+
+  const sodLinks = [
+    { name: 'School of Destiny', path: '/sod' },
+    { name: 'Register for SOD', path: '/sod/register' },
+    { name: 'Retrieve ID Card', path: '/sod/card' },
   ];
 
   const resourceLinks = [
@@ -79,6 +91,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
   ];
 
   const isResourceActive = resourceLinks.some(link => location.pathname === link.path);
+  const isSodActive = sodLinks.some(link => location.pathname === link.path);
 
   return (
     <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100 dark:border-slate-800 transition-colors">
@@ -109,7 +122,43 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
                 {link.name}
               </Link>
             ))}
-            
+
+            {/* SOD Dropdown */}
+            <div className="relative" ref={sodDropdownRef}>
+              <button
+                onMouseEnter={() => setIsSodDropdownOpen(true)}
+                onClick={() => setIsSodDropdownOpen(!isSodDropdownOpen)}
+                className={`flex items-center space-x-1 text-sm font-medium transition ${
+                  isSodActive || isSodDropdownOpen ? 'text-primary font-semibold' : 'text-gray-600 dark:text-gray-300 hover:text-primary'
+                }`}
+              >
+                <span>SOD</span>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${isSodDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isSodDropdownOpen && (
+                <div
+                  onMouseLeave={() => setIsSodDropdownOpen(false)}
+                  className="absolute top-full left-0 mt-1 w-52 bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-xl shadow-xl py-2 animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  {sodLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      to={link.path}
+                      onClick={() => setIsSodDropdownOpen(false)}
+                      className={`flex items-center px-4 py-2.5 text-sm transition ${
+                        location.pathname === link.path
+                        ? 'text-primary bg-emerald-50 dark:bg-emerald-950/30 font-semibold'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Resources Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onMouseEnter={() => setIsDropdownOpen(true)}
@@ -185,6 +234,22 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
               {link.name}
             </Link>
           ))}
+
+          <div className="py-2 border-t border-gray-50 dark:border-slate-800 mt-2">
+            <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">SOD</p>
+            {sodLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center py-2 px-3 rounded-lg text-sm font-medium ${
+                  location.pathname === link.path ? 'text-primary bg-emerald-50 dark:bg-emerald-950/20' : 'text-gray-600 dark:text-gray-300'
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+          </div>
           
           <div className="py-2 border-t border-gray-50 dark:border-slate-800 mt-2">
             <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Resources</p>
@@ -283,6 +348,10 @@ const AuthButtons = () => {
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                   <User size={16} className="text-primary" /> Manage Activities
                 </Link>
+                <Link to="/admin/sod" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <User size={16} className="text-primary" /> Manage SOD
+                </Link>
               </div>
             )}
             <button onClick={() => { signOut(); setOpen(false); }}
@@ -380,6 +449,7 @@ const App: React.FC = () => {
             <Route path="/activities/:activityId" element={<ActivityDetail />} />
             <Route path="/sod" element={<SOD />} />
             <Route path="/sod/register" element={<SODRegister />} />
+            <Route path="/sod/card" element={<SODCard />} />
             <Route path="/library" element={<Library />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/gallery" element={<Gallery />} />
@@ -392,6 +462,7 @@ const App: React.FC = () => {
             <Route path="/admin/blog" element={<AdminRoute><AdminBlog /></AdminRoute>} />
             <Route path="/admin/units" element={<AdminRoute><AdminUnits /></AdminRoute>} />
             <Route path="/admin/activities" element={<AdminRoute><AdminActivities /></AdminRoute>} />
+            <Route path="/admin/sod" element={<AdminRoute><AdminSOD /></AdminRoute>} />
           </Routes>
         </main>
         <Footer />

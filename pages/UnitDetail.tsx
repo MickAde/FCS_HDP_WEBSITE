@@ -3,13 +3,12 @@ import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { 
   ArrowLeft, 
+  ArrowRight,
   CheckCircle2, 
   Clock, 
   Info, 
-  Send,
   Calendar,
   Zap,
-  Check,
   Loader,
   Theater, 
   Users, 
@@ -26,7 +25,7 @@ import {
 } from 'lucide-react';
 import { dbService, UnitRow } from '../services/dbService';
 
-const { useParams, useNavigate } = ReactRouterDOM;
+const { useParams, useNavigate, Link } = ReactRouterDOM;
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Theater, Users, CalendarDays, Wrench, Music, Camera,
@@ -38,15 +37,11 @@ const UnitDetail: React.FC = () => {
   const navigate = useNavigate();
   const [unit, setUnit] = useState<UnitRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isRegistered, setIsRegistered] = useState(false);
 
   useEffect(() => {
     if (!unitId) return;
-    dbService.getUnits().then(({ data }) => {
-      if (data) {
-        const found = (data as UnitRow[]).find(u => u.id === unitId);
-        if (found) setUnit(found);
-      }
+    dbService.getUnit(unitId).then(({ data, error }) => {
+      if (!error && data) setUnit(data as UnitRow);
       setLoading(false);
     });
   }, [unitId]);
@@ -65,11 +60,6 @@ const UnitDetail: React.FC = () => {
   );
 
   const Icon = ICON_MAP[unit.icon] ?? Users;
-
-  const handleRegister = () => {
-    setIsRegistered(true);
-    setTimeout(() => setIsRegistered(false), 3000);
-  };
 
   return (
     <div className="bg-gray-50 dark:bg-slate-900 min-h-screen transition-colors">
@@ -145,20 +135,12 @@ const UnitDetail: React.FC = () => {
           <div className="space-y-8">
             <div className="bg-primary text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden shadow-emerald-900/20 dark:shadow-none">
               <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-4">How to Register</h3>
+                <h3 className="text-xl font-bold mb-4">How to Join</h3>
                 <p className="text-emerald-50 text-sm mb-6 leading-relaxed">
                   {unit.requirements ?? 'Contact the unit coordinator to join.'}
                 </p>
-                <button 
-                  onClick={handleRegister}
-                  className={`w-full py-4 rounded-2xl font-bold hover:scale-[1.02] transition shadow-lg flex items-center justify-center gap-2 ${
-                    isRegistered ? 'bg-emerald-400 text-white' : 'bg-white text-primary'
-                  }`}
-                >
-                  {isRegistered ? <><Check size={18} /> Application Sent</> : <><Send size={18} /> Register for this Unit</>}
-                </button>
-                <p className="text-xs text-emerald-100 mt-6 text-center italic">
-                  *New members go through a brief orientation period.
+                <p className="text-xs text-emerald-100 text-center italic">
+                  Speak to any unit member or the unit coordinator during fellowship to express your interest.
                 </p>
               </div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl rounded-full -mr-16 -mt-16"></div>
@@ -166,15 +148,13 @@ const UnitDetail: React.FC = () => {
 
             <div className="bg-white dark:bg-slate-800 p-8 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
               <h3 className="text-lg font-bold text-indigo-900 dark:text-white mb-6">Unit Leaders</h3>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-100 dark:bg-slate-900 rounded-xl overflow-hidden border border-gray-200 dark:border-slate-700">
-                  <img src={`https://picsum.photos/seed/${unit.id}lead/100`} alt="leader" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-indigo-900 dark:text-white">Unit Coordinator</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Connect via fellowship app</p>
-                </div>
-              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Meet the dedicated team behind this unit and the entire fellowship.</p>
+              <Link
+                to="/about#team"
+                className="w-full flex items-center justify-center gap-2 bg-indigo-50 dark:bg-slate-700 text-indigo-900 dark:text-white px-5 py-3 rounded-xl font-bold text-sm hover:bg-indigo-100 dark:hover:bg-slate-600 transition"
+              >
+                Meet the Team <ArrowRight size={16} />
+              </Link>
             </div>
 
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/20 p-8 rounded-[2.5rem] border border-emerald-100 dark:border-emerald-900/50 text-center">
