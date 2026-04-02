@@ -34,15 +34,15 @@ const Library: React.FC = () => {
           
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <a 
-              href="https://github.com/MickAde/FCS-LIB-REACT-NATIVE/releases/download/v1.0.0/FCS.E-Library_v1.0.0.apk" 
+              href="https://drive.google.com/file/d/13JOvDyME08G2uiVdg5Ne2EuCjlCT7X0T/view?usp=sharing" 
               download
               className="bg-primary text-white px-10 py-5 rounded-2xl font-bold hover:scale-105 transition-all shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-3"
             >
               <Download size={24} /> Download for Android (.APK)
             </a>
-            <button className="bg-white/10 backdrop-blur-md border border-white/20 px-10 py-5 rounded-2xl font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-2">
+            {/* <button className="bg-white/10 backdrop-blur-md border border-white/20 px-10 py-5 rounded-2xl font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-2">
               Learn More <ArrowRight size={20} />
-            </button>
+            </button> */}
           </div>
           <p className="mt-6 text-sm text-indigo-200/60 italic">Version 1.0.0 • Last updated: Jul 2025</p>
         </div>
