@@ -28,11 +28,11 @@ import { GoogleGenAI } from "@google/genai";
 const { Link } = ReactRouterDOM;
 
 const HERO_IMAGES = [
-  "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-  "https://images.unsplash.com/photo-1529070538774-1843cb3265df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-  "https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-  "https://images.unsplash.com/photo-1531482615713-2afd69097998?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-  "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+  "../assets/images/dance2.jpg",
+  "../assets/images/audience.jpg",
+  "../assets/images/audience1.jpg",
+  "../assets/images/gp_pray.jpg",
+  "../assets/images/dance1.jpg"
 ];
 
 const FeatureCard = ({ icon: Icon, title, description, link, bgImage }: any) => (
@@ -110,7 +110,7 @@ const Home: React.FC = () => {
                 Welcome to <span className="text-primary">His Dwelling Place</span>.
               </h1>
               <p className="text-indigo-100/80 text-lg md:text-xl mb-12 max-w-xl mx-auto lg:mx-0 leading-relaxed font-light">
-                Welcome to your spiritual home at FUTMINNA. We are a Christ-centered community dedicated to raising leaders of integrity, excellence, and unwavering faith.
+                More than a fellowship, we are a family. Whether you are looking for a place to grow, a shoulder to lean on, or a home away from home at FUTMINNA, there is a seat at the table for you.
               </p>
               
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] mb-12 text-left relative overflow-hidden max-w-lg mx-auto lg:mx-0 shadow-2xl">
@@ -135,22 +135,22 @@ const Home: React.FC = () => {
               <div className="relative z-10 animate-float grid grid-cols-2 gap-6">
                 <div className="space-y-6">
                   <img 
-                    src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                    src="../assets/images/audience.jpg" 
                     alt="Worship" 
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
                   />
                   <div className="bg-primary/90 backdrop-blur-md p-6 rounded-[2.5rem] text-white">
-                    <p className="text-2xl font-black mb-1">10</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Ministry Units</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">You’ve Found</p>
+                    <p className="text-2xl font-black mb-1">A Home of Love</p>
                   </div>
                 </div>
                 <div className="space-y-6 pt-12">
                   <div className="bg-white/10 backdrop-blur-md p-6 rounded-[2.5rem] border border-white/10 text-white">
-                    <p className="text-2xl font-black mb-1">3000+</p>
-                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Sons & Daughters</p>
+                    <p className="text-2xl font-black mb-1">3000+ Hearts</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80"> United in Christ.</p>
                   </div>
                   <img 
-                    src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                    src="assets/images/audience1.jpg" 
                     alt="Fellowship" 
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
                   />
@@ -175,19 +175,19 @@ const Home: React.FC = () => {
             {[
               { 
                 title: "Deep Worship", 
-                desc: "Experience transformative worship that connects you directly to the heart of the Father.",
+                desc: "Lose yourself in His presence. Our worship isn’t just music. It’s a heartfelt encounter where you meet God.",
                 icon: Music,
                 color: "rose"
               },
               { 
                 title: "Sound Doctrine", 
-                desc: "Grounded in the Word. Our Bible studies and sermons provide the wisdom needed for campus life.",
+                desc: "Truth that anchors. Navigate campus life with clarity through teachings that are deeply rooted in Scripture.",
                 icon: Cross,
                 color: "blue"
               },
               { 
                 title: "Genuine Love", 
-                desc: "Find a family that cares. We look out for one another's spiritual, emotional, and physical welfare.",
+                desc: "Here, you’re never alone. We carry each other's burdens and celebrate every victory together.",
                 icon: HeartHandshake,
                 color: "emerald"
               }
@@ -233,7 +233,7 @@ const Home: React.FC = () => {
               <div className="lg:w-1/2 relative">
                 <div className="relative z-10 p-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[4rem]">
                    <img 
-                     src="https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+                     src="assets/images/gp_pray.jpg" 
                      className="rounded-[3rem] w-full h-[500px] object-cover" 
                      alt="Students Together" 
                    />

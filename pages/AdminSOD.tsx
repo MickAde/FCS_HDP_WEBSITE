@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Save, Loader, BookOpen, Users, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, Loader, BookOpen, Users, DollarSign, Timer } from 'lucide-react';
 import { dbService, SodDepartmentRow, SodRegistrationRow } from '../services/dbService';
 import { useToast } from '../context/ToastContext';
 
@@ -21,16 +21,25 @@ const AdminSOD: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [tab, setTab] = useState<'departments' | 'registrations'>('departments');
+  const [tab, setTab] = useState<'departments' | 'registrations' | 'countdown'>('departments');
+  const [countdownTarget, setCountdownTarget] = useState('');
+  const [savingCountdown, setSavingCountdown] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
-    const [{ data: depts }, { data: regs }] = await Promise.all([
+    const [{ data: depts }, { data: regs }, { data: settings }] = await Promise.all([
       dbService.getSodDepartments(),
       dbService.getSodRegistrations(),
+      dbService.getSodSettings(),
     ]);
     if (depts) setDepartments(depts);
     if (regs) setRegistrations(regs);
+    if (settings?.countdown_target) {
+      // format for datetime-local input
+      const d = new Date(settings.countdown_target);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setCountdownTarget(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    }
     setLoading(false);
   };
 
@@ -66,7 +75,21 @@ const AdminSOD: React.FC = () => {
     setDeleteConfirm(null);
   };
 
-  const updateTeacher = (idx: number, val: string) =>
+  const handleSaveCountdown = async () => {
+    setSavingCountdown(true);
+    const { error } = await dbService.updateSodSettings(countdownTarget ? new Date(countdownTarget).toISOString() : null);
+    if (error) showToast('Failed to save countdown.', 'error');
+    else showToast('Countdown updated!', 'success');
+    setSavingCountdown(false);
+  };
+
+  const handleClearCountdown = async () => {
+    setSavingCountdown(true);
+    const { error } = await dbService.updateSodSettings(null);
+    if (error) showToast('Failed to clear countdown.', 'error');
+    else { showToast('Countdown cleared.', 'info'); setCountdownTarget(''); }
+    setSavingCountdown(false);
+  };
     setForm(f => { const t = [...f.teachers]; t[idx] = val; return { ...f, teachers: t }; });
   const addTeacher = () => setForm(f => ({ ...f, teachers: [...f.teachers, ''] }));
   const removeTeacher = (idx: number) => setForm(f => ({ ...f, teachers: f.teachers.filter((_, i) => i !== idx) }));

@@ -13,9 +13,9 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 const WEEKLY_SCHEDULE = [
-  { day: 'Sunday', event: 'Sunday Worship Service', time: '8:00 AM - 10:30 AM', location: 'Fellowship Hall' },
-  { day: 'Wednesday', event: 'Mid-week Bible Study', time: '5:30 PM - 7:00 PM', location: 'Hostel Clusters' },
-  { day: 'Friday', event: 'Prayer and Intercession', time: '6:00 PM - 7:30 PM', location: 'Fellowship Hall' },
+  { day: 'Sunday', event: 'Sunday Revival Hour', time: '6:00 PM - 8:30 PM', location: 'CHAPEL OF GRACE, MAIN AND BOSSO CAMPUS' },
+  { day: 'Monday', event: 'Prayer Meeting', time: '7:00 PM - 8:30 PM', location: 'CHAPEL OF GRACE, MAIN AND BOSSO CAMPUS' },
+  { day: 'Wednesday', event: 'Bible Study Meeting', time: '7:00 PM - 8:30 PM', location: 'CHAPEL OF GRACE, MAIN AND BOSSO CAMPUS' },
 ];
 
 const Activities: React.FC = () => {

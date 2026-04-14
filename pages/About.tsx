@@ -37,24 +37,24 @@ const About: React.FC = () => {
       <section className="relative py-32 bg-indigo-950 text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+            src="assets/images/church rear view.jpg" 
             alt="Students on Campus" 
             className="w-full h-full object-cover opacity-30" 
           />
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/20 text-emerald-300 text-xs font-bold uppercase tracking-[0.2em] mb-8 border border-emerald-500/20 backdrop-blur-md">
-            Our Foundation
+            The Heart of HDP
           </span>
-          <h1 className="text-4xl md:text-6xl font-poppins font-bold mb-6">More Than Just a Study Group</h1>
+          <h1 className="text-4xl md:text-6xl font-poppins font-bold mb-6">A <span className="text-primary">City</span> Set on a <span className="text-primary">Hill</span></h1>
           <p className="text-indigo-100 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed opacity-90">
-            FCS Futminna was founded with a single mission: to ensure no freshman feels overwhelmed by the transition to higher education. We build the support system you need to succeed.
+            Founded on the mandate to awaken men to His Light, FCS is a non-denominational home for all believers. We build a support system rooted in the Word of God, ensuring that from your first day to your final walk as a graduate, you remain grounded in His love and purpose.
           </p>
         </div>
       </section>
 
       {/* Values with illustrative images */}
-      <section className="py-24">
+      {/* <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {[
@@ -95,7 +95,7 @@ const About: React.FC = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* History Section with Side Image */}
       <section className="py-24 bg-gray-50 dark:bg-slate-900/50">
@@ -104,7 +104,7 @@ const About: React.FC = () => {
               <div className="lg:w-1/2 order-2 lg:order-1">
                  <h2 className="text-3xl font-poppins font-bold text-indigo-900 dark:text-white mb-6">Our Journey So Far</h2>
                  <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
-                   Starting as a small gathering of students in a hostel common room, FCS Futminna has grown into a vibrant community of scholars and light-bearers. We've weathered challenges and celebrated thousands of first-class graduates who call this fellowship home.
+                   From the warmth of our fellowship to the power of our worship, we strive to ensure that every person who enters these doors finds the strength to finish their race grounded in His love and purpose.
                  </p>
                  <div className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -119,7 +119,7 @@ const About: React.FC = () => {
               </div>
               <div className="lg:w-1/2 order-1 lg:order-2">
                  <img 
-                   src="https://images.unsplash.com/photo-1544531585-9847b68c8c86?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                   src="../assets/images/about2.jpg" 
                    className="rounded-[3rem] shadow-2xl" 
                    alt="Fellowship History" 
                  />
@@ -156,7 +156,7 @@ const About: React.FC = () => {
           <div className="bg-white dark:bg-slate-800 rounded-[3rem] border border-gray-100 dark:border-slate-700 shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
             <div className="p-12 lg:p-20">
                <h2 className="text-3xl font-bold text-indigo-900 dark:text-white mb-6">Want to Reach Out?</h2>
-               <p className="text-gray-600 dark:text-gray-400 mb-10">Our dedicated support and PR teams are ready to help with any inquiries, feedback, or collaboration requests.</p>
+               <p className="text-gray-600 dark:text-gray-400 mb-10">Our dedicated support teams are ready to help with any inquiries, feedback, or collaboration requests.</p>
                <div className="space-y-6">
                  <div className="flex items-center gap-4">
                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 rounded-xl flex items-center justify-center">
@@ -164,7 +164,7 @@ const About: React.FC = () => {
                    </div>
                    <div>
                       <div className="text-xs text-gray-400 font-bold uppercase">Official Mail</div>
-                      <div className="text-indigo-900 dark:text-white font-semibold">pr@fcsfutminna.edu</div>
+                      <div className="text-indigo-900 dark:text-white font-semibold">fcshdpminna@gmail.com</div>
                    </div>
                  </div>
                  <Link 
@@ -176,11 +176,11 @@ const About: React.FC = () => {
                </div>
             </div>
             <div className="relative">
-               <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Office" className="w-full h-full object-cover" />
+               <img src="../assets/images/welcome.png" alt="Office" className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-indigo-900/60 flex items-center justify-center p-12 text-white text-center">
                   <div>
-                    <h3 className="text-2xl font-bold mb-4">Dedicated Support</h3>
-                    <p className="text-sm opacity-80 leading-relaxed">From academic guidance to spiritual support, we're one message away.</p>
+                    <h3 className="text-2xl font-bold mb-4"></h3>
+                    <p className="text-sm opacity-80 leading-relaxed"></p>
                   </div>
                </div>
             </div>

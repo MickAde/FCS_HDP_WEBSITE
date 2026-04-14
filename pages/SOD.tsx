@@ -8,27 +8,43 @@ import { dbService, SodDepartmentRow } from '../services/dbService';
 const SOD: React.FC = () => {
   const [departments, setDepartments] = useState<SodDepartmentRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState({ days: 12, hours: 8, minutes: 45, seconds: 22 });
+  const [countdownTarget, setCountdownTarget] = useState<Date | null>(null);
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [countdownActive, setCountdownActive] = useState(false);
 
   useEffect(() => {
-    dbService.getSodDepartments().then(({ data }) => {
-      if (data) setDepartments(data);
+    Promise.all([
+      dbService.getSodDepartments(),
+      dbService.getSodSettings(),
+    ]).then(([{ data: depts }, { data: settings }]) => {
+      if (depts) setDepartments(depts);
+      if (settings?.countdown_target) {
+        const target = new Date(settings.countdown_target);
+        if (target > new Date()) {
+          setCountdownTarget(target);
+          setCountdownActive(true);
+        }
+      }
       setLoading(false);
     });
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        return prev;
+    if (!countdownActive || !countdownTarget) return;
+    const calc = () => {
+      const diff = countdownTarget.getTime() - Date.now();
+      if (diff <= 0) { setCountdownActive(false); return; }
+      setTimeLeft({
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000),
       });
-    }, 1000);
+    };
+    calc();
+    const timer = setInterval(calc, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [countdownActive, countdownTarget]);
 
   return (
     <div className="bg-white dark:bg-slate-900 text-gray-900 dark:text-white min-h-screen pb-20 transition-colors">
@@ -50,13 +66,27 @@ const SOD: React.FC = () => {
             An intensive school designed to shape identity, build character, and launch purpose. Choose your department and begin your journey.
           </p>
           <div className="grid grid-cols-4 gap-4 md:gap-8 max-w-3xl mx-auto mb-16">
-            {[{ label: 'Days', value: timeLeft.days }, { label: 'Hours', value: timeLeft.hours }, { label: 'Minutes', value: timeLeft.minutes }, { label: 'Seconds', value: timeLeft.seconds }].map((u, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-2xl">
-                <div className="text-3xl md:text-6xl font-black text-white mb-2 font-mono tabular-nums">{u.value < 10 ? `0${u.value}` : u.value}</div>
-                <div className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-primary">{u.label}</div>
-              </div>
-            ))}
+            {countdownActive ? (
+              [{ label: 'Days', value: timeLeft.days }, { label: 'Hours', value: timeLeft.hours }, { label: 'Minutes', value: timeLeft.minutes }, { label: 'Seconds', value: timeLeft.seconds }].map((u, i) => (
+                <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-2xl">
+                  <div className="text-3xl md:text-6xl font-black text-white mb-2 font-mono tabular-nums">
+                    {String(u.value).padStart(2, '0')}
+                  </div>
+                  <div className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-primary">{u.label}</div>
+                </div>
+              ))
+            ) : (
+              [{ label: 'Days' }, { label: 'Hours' }, { label: 'Minutes' }, { label: 'Seconds' }].map((u, i) => (
+                <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 md:p-10 rounded-[2rem] shadow-2xl">
+                  <div className="text-3xl md:text-6xl font-black text-white/20 mb-2 font-mono tabular-nums">--</div>
+                  <div className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-primary">{u.label}</div>
+                </div>
+              ))
+            )}
           </div>
+          {!countdownActive && (
+            <p className="text-emerald-400/70 text-sm font-bold uppercase tracking-widest mb-8">⏳ Countdown begins soon</p>
+          )}
           <Link to="/sod/register" className="group relative inline-flex items-center gap-2 bg-primary text-white px-10 py-5 rounded-2xl font-bold transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-emerald-900/40">
             Register Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </Link>

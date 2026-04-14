@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mail, Github, Twitter, Linkedin, Heart } from 'lucide-react';
+import { Mail, Youtube, Twitter, Facebook, Instagram, Heart } from 'lucide-react';
 // Fixed: Using star import for react-router-dom to resolve missing named exports issues in this environment
 import * as ReactRouterDOM from 'react-router-dom';
 
@@ -21,12 +21,13 @@ const Footer: React.FC = () => {
               <span className="text-xl font-poppins font-bold text-indigo-900 dark:text-white">FCS Futminna</span>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-6">
-              Empowering the next generation of leaders at Futminna through community, knowledge sharing, and academic excellence.
+              Fellowship of Christian Students, Federal University of Technology Minna.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Linkedin size={20} /></a>
-              <a href="#" className="text-gray-400 hover:text-primary transition-colors"><Github size={20} /></a>
+              <a href="https://www.instagram.com/fcsfutminna" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Instagram size={20} /></a>
+              <a href="https://x.com/fcshdp" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Twitter size={20} /></a>
+              <a href="https://youtube.com/@FCSFUTMINNA" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Youtube size={20} /></a>
+              <a href="https://www.facebook.com/fcsfutminna" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-primary transition-colors"><Facebook size={20} /></a>
             </div>
           </div>
           
@@ -68,7 +69,7 @@ const Footer: React.FC = () => {
         </div>
         
         <div className="border-t border-gray-50 dark:border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-          <p>© 2024 FCS Futminna. All rights reserved.</p>
+          <p>© 2025 – {new Date().getFullYear() > 2025 ? new Date().getFullYear() : ''} FCS Futminna. All rights reserved.</p>
           <p className="flex items-center mt-4 md:mt-0">
             Made with <Heart size={14} className="mx-1 text-red-500" /> for the community
           </p>

@@ -14,7 +14,11 @@ import {
   LifeBuoy,
   Users,
   MessageCircle,
-  Sparkles
+  Sparkles,
+  Instagram,
+  Youtube,
+  Facebook,
+  Twitter
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -107,7 +111,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Email Us</p>
-                    <p className="text-indigo-900 dark:text-white font-bold">hello@fcsfutminna.edu</p>
+                    <p className="text-indigo-900 dark:text-white font-bold">fcshdpminna@gmail.com</p>
                     <p className="text-xs text-gray-500 mt-1">Response in 24h</p>
                   </div>
                 </div>
@@ -118,7 +122,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Visit Us</p>
-                    <p className="text-indigo-900 dark:text-white font-bold leading-tight">Student Center, Level 4,<br/>Gidan Kwano Campus</p>
+                    <p className="text-indigo-900 dark:text-white font-bold leading-tight">Chapel Of Grace, FUTMINNA.<br/>Gidan Kwano Campus</p>
                   </div>
                 </div>
 
@@ -128,7 +132,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Call/WhatsApp</p>
-                    <p className="text-indigo-900 dark:text-white font-bold">+234 812 345 6789</p>
+                    <p className="text-indigo-900 dark:text-white font-bold">+234 900 0000 000</p>
                   </div>
                 </div>
               </div>
@@ -237,18 +241,18 @@ const Contact: React.FC = () => {
           <h2 className="text-2xl font-bold text-indigo-900 dark:text-white mb-12">Connect with our Community</h2>
           <div className="flex flex-wrap justify-center gap-10">
             {[
-              { name: 'Instagram', handle: '@fcs_futminna', color: 'text-pink-600' },
-              { name: 'YouTube', handle: 'FCS Futminna TV', color: 'text-red-600' },
-              { name: 'Facebook', handle: 'FCS Futminna Official', color: 'text-blue-600' },
-              { name: 'X / Twitter', handle: '@fcs_futminna', color: 'text-slate-900 dark:text-white' },
+              { name: 'Instagram', handle: '@fcsfutminna', color: 'text-pink-600', icon: Instagram, href: 'https://www.instagram.com/fcsfutminna' },
+              { name: 'YouTube', handle: '@FCSFUTMINNA', color: 'text-red-600', icon: Youtube, href: 'https://youtube.com/@FCSFUTMINNA' },
+              { name: 'Facebook', handle: 'FCS Futminna', color: 'text-blue-600', icon: Facebook, href: 'https://www.facebook.com/fcsfutminna' },
+              { name: 'X / Twitter', handle: '@fcshdp', color: 'text-slate-900 dark:text-white', icon: Twitter, href: 'https://x.com/fcshdp' },
             ].map((social) => (
-              <div key={social.name} className="flex flex-col items-center">
-                <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 flex items-center justify-center mb-4 hover:-translate-y-2 transition-transform cursor-pointer">
-                  <MessageSquare size={24} className={social.color} />
+              <a key={social.name} href={social.href} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center group">
+                <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 flex items-center justify-center mb-4 group-hover:-translate-y-2 transition-transform">
+                  <social.icon size={24} className={social.color} />
                 </div>
                 <p className="text-sm font-bold text-indigo-900 dark:text-white">{social.name}</p>
                 <p className="text-xs text-gray-500">{social.handle}</p>
-              </div>
+              </a>
             ))}
           </div>
         </div>

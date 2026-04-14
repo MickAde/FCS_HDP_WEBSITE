@@ -195,6 +195,17 @@ export const dbService = {
     return { data: data as SodRegistrationRow, error };
   },
 
+  // SOD Settings
+  getSodSettings: async () => {
+    const { data, error } = await supabase.from('sod_settings').select('*').eq('id', 'main').single();
+    return { data, error };
+  },
+
+  updateSodSettings: async (countdown_target: string | null) => {
+    const { data, error } = await supabase.from('sod_settings').upsert({ id: 'main', countdown_target }).select().single();
+    return { data, error };
+  },
+
   // Sermons
   getSermons: async () => {
     const { data, error } = await supabase.from('sermons').select('*').order('date', { ascending: false });
