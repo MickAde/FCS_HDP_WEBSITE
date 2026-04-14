@@ -30,6 +30,7 @@ const Units: React.FC = () => {
           <img
             src="../public/assets/images/dance tlv.jpg"
             alt="Service"
+            loading="lazy"
             className="w-full h-full object-cover opacity-10"
           />
         </div>

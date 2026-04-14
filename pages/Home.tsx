@@ -137,6 +137,7 @@ const Home: React.FC = () => {
                   <img 
                     src="../public/assets/images/audience.jpg" 
                     alt="Worship" 
+                    loading="lazy"
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
                   />
                   <div className="bg-primary/90 backdrop-blur-md p-6 rounded-[2.5rem] text-white">
@@ -152,6 +153,7 @@ const Home: React.FC = () => {
                   <img 
                     src="../public/assets/images/audience1.jpg" 
                     alt="Fellowship" 
+                    loading="lazy"
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
                   />
                 </div>
@@ -236,6 +238,7 @@ const Home: React.FC = () => {
                      src="../public/assets/images/gp_pray.jpg" 
                      className="rounded-[3rem] w-full h-[500px] object-cover" 
                      alt="Students Together" 
+                     loading="lazy"
                    />
                 </div>
                 <div className="absolute -top-10 -right-10 w-64 h-64 bg-primary/20 blur-[100px] rounded-full"></div>
