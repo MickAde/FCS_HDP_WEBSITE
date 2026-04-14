@@ -37,7 +37,7 @@ const About: React.FC = () => {
       <section className="relative py-32 bg-indigo-950 text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="assets/images/church rear view.jpg" 
+            src="/assets/images/church rear view.jpg" 
             alt="Students on Campus" 
             className="w-full h-full object-cover opacity-30" 
           />
@@ -119,7 +119,7 @@ const About: React.FC = () => {
               </div>
               <div className="lg:w-1/2 order-1 lg:order-2">
                  <img 
-                   src="../assets/images/about2.jpg" 
+                   src="/assets/images/about2.jpg" 
                    className="rounded-[3rem] shadow-2xl" 
                    alt="Fellowship History" 
                  />
@@ -176,7 +176,7 @@ const About: React.FC = () => {
                </div>
             </div>
             <div className="relative">
-               <img src="../assets/images/welcome.png" alt="Office" className="w-full h-full object-cover" />
+               <img src="/assets/images/welcome.png" alt="Office" className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-indigo-900/60 flex items-center justify-center p-12 text-white text-center">
                   <div>
                     <h3 className="text-2xl font-bold mb-4"></h3>
