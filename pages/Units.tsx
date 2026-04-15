@@ -28,7 +28,7 @@ const Units: React.FC = () => {
       <section className="relative bg-indigo-900 py-32 text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img
-            src="../public/assets/images/dance tlv.jpg"
+            src="/assets/images/dance tlv.jpg"
             alt="Service"
             loading="lazy"
             className="w-full h-full object-cover opacity-10"

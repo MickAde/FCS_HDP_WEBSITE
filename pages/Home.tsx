@@ -28,11 +28,11 @@ import { GoogleGenAI } from "@google/genai";
 const { Link } = ReactRouterDOM;
 
 const HERO_IMAGES = [
-  "../public/assets/images/dance2.jpg",
-  "../public/assets/images/audience.jpg",
-  "../public/assets/images/audience1.jpg",
-  "../public/assets/images/gp_pray.jpg",
-  "../public/assets/images/dance1.jpg"
+  "/assets/images/dance2.jpg",
+  "/assets/images/audience.jpg",
+  "/assets/images/audience1.jpg",
+  "/assets/images/gp_pray.jpg",
+  "/assets/images/dance1.jpg"
 ];
 
 const FeatureCard = ({ icon: Icon, title, description, link, bgImage }: any) => (
@@ -135,7 +135,7 @@ const Home: React.FC = () => {
               <div className="relative z-10 animate-float grid grid-cols-2 gap-6">
                 <div className="space-y-6">
                   <img 
-                    src="../public/assets/images/audience.jpg" 
+                    src="/assets/images/audience.jpg" 
                     alt="Worship" 
                     loading="lazy"
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
@@ -151,7 +151,7 @@ const Home: React.FC = () => {
                     <p className="text-[10px] font-bold uppercase tracking-widest opacity-80"> United in Christ.</p>
                   </div>
                   <img 
-                    src="../public/assets/images/audience1.jpg" 
+                    src="/assets/images/audience1.jpg" 
                     alt="Fellowship" 
                     loading="lazy"
                     className="rounded-[3rem] shadow-2xl border border-white/10 h-72 w-full object-cover"
@@ -235,7 +235,7 @@ const Home: React.FC = () => {
               <div className="lg:w-1/2 relative">
                 <div className="relative z-10 p-4 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[4rem]">
                    <img 
-                     src="../public/assets/images/gp_pray.jpg" 
+                     src="/assets/images/gp_pray.jpg" 
                      className="rounded-[3rem] w-full h-[500px] object-cover" 
                      alt="Students Together" 
                      loading="lazy"
