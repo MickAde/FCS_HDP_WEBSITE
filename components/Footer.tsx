@@ -1,9 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Mail, Youtube, Twitter, Facebook, Instagram, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const Footer: React.FC = () => {
+  const [footerEmail, setFooterEmail] = useState('');
+  const [footerState, setFooterState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleFooterSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFooterState('loading');
+    const { error } = await supabase.from('subscribers').insert({ email: footerEmail });
+    if (error) {
+      setFooterState(error.code === '23505' ? 'success' : 'error');
+    } else {
+      setFooterState('success');
+      setFooterEmail('');
+    }
+  };
   return (
     <footer className="bg-white dark:bg-slate-950 border-t border-gray-100 dark:border-slate-800 pt-16 pb-8 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,16 +67,22 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-bold text-indigo-900 dark:text-white mb-6 text-sm uppercase tracking-wider">Subscribe</h4>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Get the latest updates and study materials.</p>
-            <div className="flex gap-2">
-              <input 
-                type="email" 
-                placeholder="Email address" 
-                className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full dark:text-white"
-              />
-              <button className="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90 transition">
-                Join
-              </button>
-            </div>
+            {footerState === 'success' ? (
+              <p className="text-primary font-bold text-sm">You're subscribed! 🎉</p>
+            ) : (
+              <form onSubmit={handleFooterSubscribe} className="flex gap-2">
+                <input
+                  required type="email" value={footerEmail}
+                  onChange={e => setFooterEmail(e.target.value)}
+                  placeholder="Email address"
+                  className="bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-full dark:text-white"
+                />
+                <button type="submit" disabled={footerState === 'loading'} className="bg-primary text-white px-4 py-2 rounded-lg text-sm hover:opacity-90 transition disabled:opacity-60">
+                  {footerState === 'loading' ? '...' : 'Join'}
+                </button>
+              </form>
+            )}
+            {footerState === 'error' && <p className="text-red-500 text-xs mt-1">Something went wrong. Try again.</p>}
           </div>
         </div>
         

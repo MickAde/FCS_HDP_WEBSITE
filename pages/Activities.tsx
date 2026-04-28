@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Clock, ArrowRight, Bell, CalendarDays, Sparkles, Loader } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { dbService, ActivityRow } from '../services/dbService';
 
 const FILTERS = ['All', 'General', 'Workshop', 'Outreach', 'Prayer'];
@@ -22,6 +23,20 @@ const Activities: React.FC = () => {
   const [activities, setActivities] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('All');
+  const [subEmail, setSubEmail] = useState('');
+  const [subState, setSubState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubState('loading');
+    const { error } = await supabase.from('subscribers').insert({ email: subEmail });
+    if (error) {
+      setSubState(error.code === '23505' ? 'success' : 'error');
+    } else {
+      setSubState('success');
+      setSubEmail('');
+    }
+  };
 
   useEffect(() => {
     dbService.getActivities().then(({ data }) => {
@@ -188,14 +203,22 @@ const Activities: React.FC = () => {
                   Subscribe to get email reminders for upcoming programs and special outreaches.
                 </p>
                 <div className="space-y-3">
-                  <input
-                    type="email"
-                    placeholder="Email address"
-                    className="w-full bg-white/10 dark:bg-slate-900 border border-white/20 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
-                  />
-                  <button className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition">
-                    Subscribe Now
-                  </button>
+                  {subState === 'success' ? (
+                    <p className="text-emerald-400 font-bold text-sm text-center">You're subscribed! 🎉</p>
+                  ) : (
+                    <form onSubmit={handleSubscribe} className="space-y-3">
+                      <input
+                        required type="email" value={subEmail}
+                        onChange={e => setSubEmail(e.target.value)}
+                        placeholder="Email address"
+                        className="w-full bg-white/10 dark:bg-slate-900 border border-white/20 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
+                      />
+                      {subState === 'error' && <p className="text-red-400 text-xs">Something went wrong. Try again.</p>}
+                      <button type="submit" disabled={subState === 'loading'} className="w-full bg-primary text-white font-bold py-3 rounded-xl hover:opacity-90 transition disabled:opacity-60">
+                        {subState === 'loading' ? 'Subscribing...' : 'Subscribe Now'}
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 blur-3xl rounded-full -mr-16 -mt-16" />
