@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, ArrowRight, Bell, CalendarDays, Sparkles, Loader } from 'lucide-react';
+import { Calendar, MapPin, Clock, ArrowRight, Bell, CalendarDays, Sparkles, Loader, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { dbService, ActivityRow } from '../services/dbService';
 
@@ -50,6 +50,51 @@ const Activities: React.FC = () => {
     : activities.filter(a => a.type === activeFilter);
 
   const featuredEvent = activities.find(a => a.featured);
+
+  const handleSyncCalendar = () => {
+    if (!activities.length) return;
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const toIcsDate = (dateStr: string, timeStr: string) => {
+      const d = new Date(`${dateStr} ${timeStr}`);
+      if (isNaN(d.getTime())) return null;
+      return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+    };
+
+    const events = activities.map(a => {
+      const dtstart = toIcsDate(a.date, a.time);
+      const dtend = toIcsDate(a.end_date ?? a.date, a.time);
+      if (!dtstart || !dtend) return '';
+      return [
+        'BEGIN:VEVENT',
+        `UID:${a.id}@fcs-futminna`,
+        `SUMMARY:${a.title}`,
+        `DTSTART:${dtstart}`,
+        `DTEND:${dtend}`,
+        `LOCATION:${a.location}`,
+        `DESCRIPTION:${(a.description ?? '').replace(/\n/g, '\\n')}`,
+        'END:VEVENT',
+      ].join('\r\n');
+    }).filter(Boolean);
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//FCS FUTMinna//Fellowship Calendar//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      ...events,
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fcs-futminna-calendar.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="bg-gray-50 dark:bg-slate-900 min-h-screen pb-24 transition-colors duration-300">
@@ -228,8 +273,12 @@ const Activities: React.FC = () => {
               <CalendarDays className="mx-auto text-primary mb-4" size={32} />
               <h4 className="font-bold text-indigo-900 dark:text-white mb-2">Fellowship Calendar</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">Import our full academic year calendar directly to your Google or Apple Calendar.</p>
-              <button className="text-primary font-bold text-sm hover:underline flex items-center justify-center gap-1 mx-auto">
-                Sync Calendar <ArrowRight size={14} />
+              <button
+                onClick={handleSyncCalendar}
+                disabled={!activities.length}
+                className="text-primary font-bold text-sm hover:underline flex items-center justify-center gap-1 mx-auto disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Download size={14} /> Download .ics Calendar
               </button>
             </div>
           </div>
