@@ -1,10 +1,7 @@
 
 import React from 'react';
 import { Mail, Youtube, Twitter, Facebook, Instagram, Heart } from 'lucide-react';
-// Fixed: Using star import for react-router-dom to resolve missing named exports issues in this environment
-import * as ReactRouterDOM from 'react-router-dom';
-
-const { Link } = ReactRouterDOM;
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (

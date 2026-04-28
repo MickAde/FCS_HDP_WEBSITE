@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, X, Save, Loader, BookOpen, Users, DollarSign, Timer } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Save, Loader, BookOpen, Users, DollarSign } from 'lucide-react';
 import { dbService, SodDepartmentRow, SodRegistrationRow } from '../services/dbService';
 import { useToast } from '../context/ToastContext';
 
@@ -90,6 +90,8 @@ const AdminSOD: React.FC = () => {
     else { showToast('Countdown cleared.', 'info'); setCountdownTarget(''); }
     setSavingCountdown(false);
   };
+
+  const updateTeacher = (idx: number, val: string) =>
     setForm(f => { const t = [...f.teachers]; t[idx] = val; return { ...f, teachers: t }; });
   const addTeacher = () => setForm(f => ({ ...f, teachers: [...f.teachers, ''] }));
   const removeTeacher = (idx: number) => setForm(f => ({ ...f, teachers: f.teachers.filter((_, i) => i !== idx) }));
@@ -109,7 +111,7 @@ const AdminSOD: React.FC = () => {
           )}
         </div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex gap-2">
-          {(['departments', 'registrations'] as const).map(t => (
+          {(['departments', 'registrations', 'countdown'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-2 rounded-full text-sm font-bold transition capitalize ${tab === t ? 'bg-white text-indigo-900' : 'bg-white/10 text-white hover:bg-white/20'}`}>
               {t}
@@ -159,7 +161,7 @@ const AdminSOD: React.FC = () => {
               ))}
             </div>
           )
-        ) : (
+        ) : tab === 'registrations' ? (
           registrations.length === 0 ? (
             <div className="text-center py-32 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-gray-200 dark:border-slate-700">
               <Users size={48} className="mx-auto text-gray-300 dark:text-slate-600 mb-4" />
@@ -197,6 +199,29 @@ const AdminSOD: React.FC = () => {
               </div>
             </div>
           )
+        ) : (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-8 max-w-lg">
+            <h3 className="text-lg font-bold text-indigo-900 dark:text-white mb-2">SOD Countdown Timer</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Set the target date for the SOD countdown displayed on the public page.</p>
+            <div className="space-y-4">
+              <input
+                type="datetime-local"
+                value={countdownTarget}
+                onChange={e => setCountdownTarget(e.target.value)}
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white"
+              />
+              <div className="flex gap-3">
+                <button onClick={handleSaveCountdown} disabled={savingCountdown}
+                  className="flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition disabled:opacity-60">
+                  {savingCountdown ? <Loader size={16} className="animate-spin" /> : <Save size={16} />} Save
+                </button>
+                <button onClick={handleClearCountdown} disabled={savingCountdown}
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold border border-gray-200 dark:border-slate-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700 transition disabled:opacity-60">
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 

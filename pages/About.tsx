@@ -37,7 +37,7 @@ const About: React.FC = () => {
       <section className="relative py-32 bg-indigo-950 text-white overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
-            src="/assets/images/church rear view.jpg" 
+            src="/assets/images/church-rear-view.jpg" 
             alt="Students on Campus" 
             className="w-full h-full object-cover opacity-30" 
           />

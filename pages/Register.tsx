@@ -57,7 +57,7 @@ const Register: React.FC = () => {
           <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-950/30 text-primary rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} />
           </div>
-          <h2 className="text-2xl font-poppins font-bold text-indigo-900 dark:text-white mb-3">You're almost in!</h2>
+          <h2 className="text-2xl font-poppins font-bold text-indigo-900 dark:text-white mb-3">You're in the family!</h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">
             We sent a confirmation link to <span className="font-bold text-indigo-900 dark:text-white">{email}</span>. Check your inbox and click the link to activate your account.
           </p>
@@ -77,9 +77,9 @@ const Register: React.FC = () => {
         <div className="md:w-1/2 bg-indigo-900 dark:bg-slate-950 p-12 text-white relative flex flex-col justify-between overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img
-              src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              src="/assets/images/dance1.jpg"
               alt="Fellowship"
-              className="w-full h-full object-cover opacity-20"
+              className="w-full h-full object-cover opacity-30"
             />
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/80 to-transparent"></div>
           </div>
@@ -89,15 +89,15 @@ const Register: React.FC = () => {
               <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Back to Home
             </Link>
             <h2 className="text-3xl md:text-4xl font-poppins font-bold mb-6">
-              Join the <br /><span className="text-primary">FCS Family!</span>
+              You Belong <br /><span className="text-primary">Here.</span>
             </h2>
             <p className="text-indigo-100/70 text-lg leading-relaxed max-w-xs">
-              Create your account to access the AI Study Buddy, test simulator, and personalized resources.
+              This is more than a platform — it's a community. Join a family that prays, grows, and thrives together.
             </p>
           </div>
 
           <div className="relative z-10 space-y-4">
-            {['Access AI Study Buddy', 'Save test results & history', 'Register for SOD & events'].map((item, i) => (
+            {['Connect with your FCS community', 'Register for SOD & fellowship events', 'Join the HDP Family World Wide'].map((item, i) => (
               <div key={i} className="flex items-center gap-3">
                 <div className="w-5 h-5 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center flex-shrink-0">
                   <div className="w-2 h-2 rounded-full bg-primary"></div>
@@ -114,7 +114,7 @@ const Register: React.FC = () => {
         <div className="md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
           <div className="mb-8">
             <h1 className="text-3xl font-poppins font-bold text-indigo-900 dark:text-white mb-2">Create Account</h1>
-            <p className="text-gray-500 dark:text-gray-400">Join thousands of students at FUTMINNA.</p>
+            <p className="text-gray-500 dark:text-gray-400">A seat at the table is waiting for you.</p>
           </div>
 
           {error && (
@@ -189,7 +189,7 @@ const Register: React.FC = () => {
           </div>
 
           <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Already have an account?{' '}
+            Already one of us?{' '}
             <Link to="/login" className="text-primary font-bold hover:underline">Sign in</Link>
           </p>
         </div>

@@ -67,9 +67,9 @@ const Login: React.FC = () => {
         <div className="md:w-1/2 bg-indigo-900 dark:bg-slate-950 p-12 text-white relative flex flex-col justify-between overflow-hidden">
           <div className="absolute inset-0 z-0">
             <img
-              src="https://images.unsplash.com/photo-1523050335102-c824af0331d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-              alt="Campus"
-              className="w-full h-full object-cover opacity-20"
+              src="/assets/images/dance.jpg"
+              alt="Fellowship"
+              className="w-full h-full object-cover opacity-30"
             />
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/80 to-transparent"></div>
           </div>
@@ -79,17 +79,17 @@ const Login: React.FC = () => {
               <ArrowLeft size={18} className="mr-2 group-hover:-translate-x-1 transition-transform" /> Back to Home
             </Link>
             <h2 className="text-3xl md:text-4xl font-poppins font-bold mb-6">
-              Welcome Back, <br /><span className="text-primary">Scholar!</span>
+              Welcome Back, <br /><span className="text-primary">Beloved!</span>
             </h2>
             <p className="text-indigo-100/70 text-lg leading-relaxed max-w-xs">
-              Sign in to access your personalized study plans, saved resources, and test history.
+              We're glad you're back. Your community, your resources, and your journey continue right here.
             </p>
           </div>
 
           <div className="relative z-10">
             <div className="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-2xl">
-              <p className="text-sm italic mb-4">"The fear of the Lord is the beginning of wisdom, and knowledge of the Holy One is understanding."</p>
-              <p className="text-xs font-bold uppercase tracking-widest text-primary">— Proverbs 9:10</p>
+              <p className="text-sm italic mb-4">"For where two or three gather in my name, there am I with them."</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-primary">— Matthew 18:20</p>
             </div>
           </div>
 
@@ -103,7 +103,7 @@ const Login: React.FC = () => {
             <>
               <div className="mb-10">
                 <h1 className="text-3xl font-poppins font-bold text-indigo-900 dark:text-white mb-2">Sign In</h1>
-                <p className="text-gray-500 dark:text-gray-400">Enter your credentials to continue your journey.</p>
+                <p className="text-gray-500 dark:text-gray-400">Step back in — your family is waiting.</p>
               </div>
 
               {error && (

@@ -46,6 +46,12 @@ import Footer from './components/Footer';
 const { HashRouter, Routes, Route, Link, useLocation, Navigate } = ReactRouterDOM;
 const Router = HashRouter;
 
+const ScrollToTop = () => {
+  const location = useLocation();
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }, [location.pathname]);
+  return null;
+};
+
 const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDarkMode: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -436,6 +442,7 @@ const App: React.FC = () => {
     <Router>
       <ToastProvider>
       <AuthProvider>
+      <ScrollToTop />
       <div className="min-h-screen flex flex-col bg-[#fcfcfd] dark:bg-slate-900 text-gray-900 dark:text-gray-100 transition-colors">
         <Navbar isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
         <main className="flex-grow">
