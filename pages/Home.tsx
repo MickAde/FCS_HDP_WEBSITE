@@ -92,7 +92,7 @@ const Home: React.FC = () => {
             <div
               key={img}
               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out bg-cover bg-center mix-blend-overlay ${
-                idx === currentBgIndex ? 'opacity-60' : 'opacity-0'
+                idx === currentBgIndex ? 'opacity-80' : 'opacity-0'
               }`}
               style={{ backgroundImage: `url('${img}')` }}
             />

@@ -39,7 +39,7 @@ const About: React.FC = () => {
           <img 
             src="/assets/images/church-rear-view.jpg" 
             alt="Students on Campus" 
-            className="w-full h-full object-cover opacity-50" 
+            className="w-full h-full object-cover opacity-75" 
           />
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
