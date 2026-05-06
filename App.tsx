@@ -92,7 +92,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
     { name: 'School of Destiny', path: '/sod' },
     { name: 'Register for SOD', path: '/sod/register' },
     { name: 'Retrieve ID Card', path: '/sod/card' },
-    { name: 'My Results', path: '/sod/results' },
+    { name: 'My Exams & Results', path: '/sod/results' },
     ...(['admin', 'leader', 'registrar'].includes(profile?.role ?? '') ? [{ name: 'Generate Coupon', path: '/registrar/sod' }] : []),
   ];
 
@@ -227,6 +227,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
             >
               {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
+            <MobileAuthQuickButtons />
             <button onClick={() => setIsOpen(!isOpen)} className="text-gray-600 dark:text-gray-300 p-2">
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -282,7 +283,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
             ))}
           </div>
           
-          <Link to="/simulator" onClick={() => setIsOpen(false)} className="block py-3 mt-4 bg-primary text-white text-center rounded-xl font-bold shadow-lg">
+          <Link to="/simulator" onClick={() => setIsOpen(false)} className="block py-3 mt-2 bg-primary text-white text-center rounded-xl font-bold shadow-lg">
             Try Simulator
           </Link>
           <MobileAuthButtons setIsOpen={setIsOpen} />
@@ -410,6 +411,30 @@ const AuthButtons = () => {
   );
 };
 
+const MobileAuthQuickButtons = () => {
+  const { user, profile } = useAuth();
+  if (user) {
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+    const name = profile?.full_name ?? user.email;
+    const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+    return (
+      <div className="w-8 h-8 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center overflow-hidden flex-shrink-0">
+        {avatarUrl ? <img src={avatarUrl} alt={name} className="w-full h-full object-cover" /> : initials}
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5">
+      <Link to="/login" className="text-xs font-bold text-gray-600 dark:text-gray-300 hover:text-primary transition px-2 py-1.5 rounded-lg border border-gray-200 dark:border-slate-700">
+        Sign In
+      </Link>
+      <Link to="/register" className="text-xs font-bold bg-primary text-white px-2.5 py-1.5 rounded-lg hover:opacity-90 transition">
+        Join Us
+      </Link>
+    </div>
+  );
+};
+
 const MobileAuthButtons = ({ setIsOpen }: { setIsOpen: (v: boolean) => void }) => {
   const { user, profile, signOut } = useAuth();
   if (user) {
@@ -454,14 +479,14 @@ const MobileAuthButtons = ({ setIsOpen }: { setIsOpen: (v: boolean) => void }) =
     );
   }
   return (
-    <div className="mt-2 flex flex-col gap-2">
+    <div className="mt-3 flex flex-col gap-2">
       <Link to="/login" onClick={() => setIsOpen(false)}
-        className="block py-3 border border-gray-200 dark:border-slate-700 text-indigo-900 dark:text-white text-center rounded-xl font-bold text-sm">
+        className="flex items-center justify-center gap-2 py-3.5 border-2 border-gray-200 dark:border-slate-700 text-indigo-900 dark:text-white text-center rounded-2xl font-bold text-sm hover:border-primary hover:text-primary transition">
         Sign In
       </Link>
       <Link to="/register" onClick={() => setIsOpen(false)}
-        className="block py-3 bg-primary text-white text-center rounded-xl font-bold text-sm">
-        Join Us
+        className="flex items-center justify-center gap-2 py-3.5 bg-primary text-white text-center rounded-2xl font-bold text-sm hover:opacity-90 transition shadow-lg">
+        Join Us — It's Free
       </Link>
     </div>
   );
