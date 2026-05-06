@@ -21,9 +21,13 @@ const AdminSOD: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [tab, setTab] = useState<'departments' | 'registrations' | 'countdown'>('departments');
+  const [tab, setTab] = useState<'departments' | 'registrations' | 'countdown' | 'roles'>('departments');
   const [countdownTarget, setCountdownTarget] = useState('');
   const [savingCountdown, setSavingCountdown] = useState(false);
+  const [roleEmail, setRoleEmail] = useState('');
+  const [roleTarget, setRoleTarget] = useState<any>(null);
+  const [roleSearching, setRoleSearching] = useState(false);
+  const [roleSaving, setRoleSaving] = useState(false);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -91,6 +95,25 @@ const AdminSOD: React.FC = () => {
     setSavingCountdown(false);
   };
 
+  const handleRoleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRoleSearching(true);
+    setRoleTarget(null);
+    const { data, error } = await dbService.getUserByEmail(roleEmail);
+    if (error || !data) showToast('User not found.', 'error');
+    else setRoleTarget(data);
+    setRoleSearching(false);
+  };
+
+  const handleRoleSave = async (role: string) => {
+    if (!roleTarget) return;
+    setRoleSaving(true);
+    const { error } = await dbService.updateUserRole(roleTarget.id, role);
+    if (error) showToast('Failed to update role.', 'error');
+    else { showToast(`Role updated to ${role}!`, 'success'); setRoleTarget({ ...roleTarget, role }); }
+    setRoleSaving(false);
+  };
+
   const updateTeacher = (idx: number, val: string) =>
     setForm(f => { const t = [...f.teachers]; t[idx] = val; return { ...f, teachers: t }; });
   const addTeacher = () => setForm(f => ({ ...f, teachers: [...f.teachers, ''] }));
@@ -111,7 +134,7 @@ const AdminSOD: React.FC = () => {
           )}
         </div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 flex gap-2">
-          {(['departments', 'registrations', 'countdown'] as const).map(t => (
+          {(['departments', 'registrations', 'countdown', 'roles'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`px-5 py-2 rounded-full text-sm font-bold transition capitalize ${tab === t ? 'bg-white text-indigo-900' : 'bg-white/10 text-white hover:bg-white/20'}`}>
               {t}
@@ -199,7 +222,7 @@ const AdminSOD: React.FC = () => {
               </div>
             </div>
           )
-        ) : (
+        ) : tab === 'countdown' ? (
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-8 max-w-lg">
             <h3 className="text-lg font-bold text-indigo-900 dark:text-white mb-2">SOD Countdown Timer</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Set the target date for the SOD countdown displayed on the public page.</p>
@@ -221,6 +244,41 @@ const AdminSOD: React.FC = () => {
                 </button>
               </div>
             </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 p-8 max-w-lg">
+            <h3 className="text-lg font-bold text-indigo-900 dark:text-white mb-2">Assign User Role</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Search a user by email and assign them a role. Only admins can do this.</p>
+            <form onSubmit={handleRoleSearch} className="flex gap-3 mb-6">
+              <input value={roleEmail} onChange={e => setRoleEmail(e.target.value)} required type="email"
+                placeholder="user@example.com"
+                className="flex-grow bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white" />
+              <button type="submit" disabled={roleSearching}
+                className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition disabled:opacity-60">
+                {roleSearching ? <Loader size={16} className="animate-spin" /> : 'Search'}
+              </button>
+            </form>
+            {roleTarget && (
+              <div className="bg-gray-50 dark:bg-slate-900 rounded-xl p-5 space-y-4">
+                <div>
+                  <p className="font-bold text-indigo-900 dark:text-white">{roleTarget.full_name}</p>
+                  <p className="text-sm text-gray-500">{roleTarget.email}</p>
+                  <p className="text-xs mt-1">Current role: <span className="font-bold text-primary uppercase">{roleTarget.role}</span></p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {['member', 'leader', 'registrar', 'admin'].map(r => (
+                    <button key={r} onClick={() => handleRoleSave(r)} disabled={roleSaving || roleTarget.role === r}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition capitalize ${
+                        roleTarget.role === r
+                          ? 'bg-primary text-white'
+                          : 'border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary'
+                      } disabled:opacity-60`}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

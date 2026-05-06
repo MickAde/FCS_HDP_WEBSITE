@@ -126,17 +126,32 @@ CREATE TABLE sod_registrations (
   full_name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT NOT NULL,
-  level TEXT NOT NULL,
-  faculty_dept TEXT NOT NULL,
+  level TEXT,
+  faculty_dept TEXT,
   paystack_ref TEXT,
   payment_status TEXT DEFAULT 'pending' CHECK (payment_status IN ('pending','paid')),
   student_id TEXT UNIQUE NOT NULL,
+  photo_url TEXT,
+  coupon_code TEXT,
+  user_id UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- SOD Coupons Table
+CREATE TABLE sod_coupons (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code TEXT UNIQUE NOT NULL,
+  department_id UUID NOT NULL REFERENCES sod_departments(id) ON DELETE CASCADE,
+  used BOOLEAN DEFAULT false,
+  used_by TEXT,
+  created_by UUID REFERENCES auth.users(id),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Enable Row Level Security
 ALTER TABLE sod_departments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sod_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sod_coupons ENABLE ROW LEVEL SECURITY;
 
 -- SOD RLS
 CREATE POLICY "Public read sod_departments" ON sod_departments FOR SELECT USING (true);
@@ -144,6 +159,12 @@ CREATE POLICY "Admins manage sod_departments" ON sod_departments FOR ALL USING (
 CREATE POLICY "Anyone can register" ON sod_registrations FOR INSERT WITH CHECK (true);
 CREATE POLICY "Users view own registration" ON sod_registrations FOR SELECT USING (true);
 CREATE POLICY "Admins manage registrations" ON sod_registrations FOR ALL USING (auth.role() = 'authenticated');
+
+-- Coupons RLS
+CREATE POLICY "Public read sod_coupons" ON sod_coupons FOR SELECT USING (true);
+CREATE POLICY "Registrars can create coupons" ON sod_coupons FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Anyone can mark coupon used" ON sod_coupons FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Registrars can delete coupons" ON sod_coupons FOR DELETE USING (auth.role() = 'authenticated');
 
 -- Enable Row Level Security
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

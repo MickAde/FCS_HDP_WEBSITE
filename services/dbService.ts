@@ -38,6 +38,18 @@ export interface SodRegistrationRow {
   payment_status: 'pending' | 'paid';
   student_id: string;
   photo_url: string | null;
+  coupon_code: string | null;
+  user_id: string | null;
+  created_at?: string;
+}
+
+export interface SodCouponRow {
+  id: string;
+  code: string;
+  department_id: string;
+  used: boolean;
+  used_by: string | null;
+  created_by: string | null;
   created_at?: string;
 }
 
@@ -195,7 +207,56 @@ export const dbService = {
     return { data: data as SodRegistrationRow, error };
   },
 
-  // SOD Settings
+  // User role management
+  getUserByEmail: async (email: string) => {
+    const { data, error } = await supabase.from('profiles').select('id, full_name, email, role').eq('email', email).single();
+    return { data, error };
+  },
+
+  updateUserRole: async (id: string, role: string) => {
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', id);
+    return { error };
+  },
+
+  // SOD Coupons
+  getSodCoupons: async () => {
+    const { data, error } = await supabase
+      .from('sod_coupons')
+      .select('*, sod_departments(name)')
+      .order('created_at', { ascending: false });
+    return { data, error };
+  },
+
+  createSodCoupon: async (department_id: string, created_by: string) => {
+    const code = 'SOD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    const { data, error } = await supabase
+      .from('sod_coupons')
+      .insert({ code, department_id, created_by })
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  validateSodCoupon: async (code: string) => {
+    const { data, error } = await supabase
+      .from('sod_coupons')
+      .select('*, sod_departments(*)')
+      .eq('code', code.toUpperCase())
+      .eq('used', false)
+      .single();
+    return { data, error };
+  },
+
+  markCouponUsed: async (code: string, used_by: string, id?: string) => {
+    const query = supabase.from('sod_coupons').update({ used: true, used_by });
+    const { error } = id ? await query.eq('id', id) : await query.eq('code', code.toUpperCase());
+    return { error };
+  },
+
+  deleteSodCoupon: async (id: string) => {
+    const { error } = await supabase.from('sod_coupons').delete().eq('id', id);
+    return { error };
+  },
   getSodSettings: async () => {
     const { data, error } = await supabase.from('sod_settings').select('*').eq('id', 'main').single();
     return { data, error };
@@ -204,6 +265,92 @@ export const dbService = {
   updateSodSettings: async (countdown_target: string | null) => {
     const { data, error } = await supabase.from('sod_settings').upsert({ id: 'main', countdown_target }).select().single();
     return { data, error };
+  },
+
+  // SOD Exams
+  getSodExams: async () => {
+    const { data, error } = await supabase.from('sod_exams').select('*, sod_departments(name)').order('created_at', { ascending: false });
+    return { data, error };
+  },
+
+  getSodExamsByDepartment: async (department_id: string) => {
+    const { data, error } = await supabase.from('sod_exams').select('*').eq('department_id', department_id).eq('is_published', true);
+    return { data, error };
+  },
+
+  getSodExam: async (id: string) => {
+    const { data, error } = await supabase.from('sod_exams').select('*').eq('id', id).single();
+    return { data, error };
+  },
+
+  createSodExam: async (exam: { department_id: string; title: string; description?: string; duration_minutes: number; pass_mark: number }) => {
+    const { data, error } = await supabase.from('sod_exams').insert([exam]).select().single();
+    return { data, error };
+  },
+
+  updateSodExam: async (id: string, updates: Partial<{ title: string; description: string; duration_minutes: number; pass_mark: number; is_published: boolean; results_visible: boolean }>) => {
+    const { data, error } = await supabase.from('sod_exams').update(updates).eq('id', id).select().single();
+    return { data, error };
+  },
+
+  deleteSodExam: async (id: string) => {
+    const { error } = await supabase.from('sod_exams').delete().eq('id', id);
+    return { error };
+  },
+
+  // SOD Questions
+  getSodQuestions: async (exam_id: string) => {
+    const { data, error } = await supabase.from('sod_questions').select('id, exam_id, question, type, options, marks, "order"').eq('exam_id', exam_id).order('order');
+    return { data, error };
+  },
+
+  getSodQuestionsAdmin: async (exam_id: string) => {
+    const { data, error } = await supabase.from('sod_questions').select('*').eq('exam_id', exam_id).order('order');
+    return { data, error };
+  },
+
+  createSodQuestion: async (q: { exam_id: string; question: string; type: string; options: string[]; correct_answer: string; marks: number; order: number }) => {
+    const { data, error } = await supabase.from('sod_questions').insert([q]).select().single();
+    return { data, error };
+  },
+
+  updateSodQuestion: async (id: string, updates: Partial<{ question: string; type: string; options: string[]; correct_answer: string; marks: number; order: number }>) => {
+    const { data, error } = await supabase.from('sod_questions').update(updates).eq('id', id).select().single();
+    return { data, error };
+  },
+
+  deleteSodQuestion: async (id: string) => {
+    const { error } = await supabase.from('sod_questions').delete().eq('id', id);
+    return { error };
+  },
+
+  // SOD Submissions
+  getMySubmission: async (exam_id: string, user_id: string) => {
+    const { data, error } = await supabase.from('sod_submissions').select('*').eq('exam_id', exam_id).eq('user_id', user_id).maybeSingle();
+    return { data, error };
+  },
+
+  startExam: async (exam_id: string, user_id: string, student_id: string) => {
+    const { data, error } = await supabase.from('sod_submissions').insert([{ exam_id, user_id, student_id }]).select().single();
+    return { data, error };
+  },
+
+  getSodSubmissions: async (exam_id: string) => {
+    const { data, error } = await supabase.from('sod_submissions').select('*, sod_answers(*, sod_questions(id, question, type, marks, "order"))').eq('exam_id', exam_id).order('created_at', { ascending: false });
+    return { data, error };
+  },
+
+  updateAnswerMarks: async (answer_id: string, marks_awarded: number) => {
+    const { error } = await supabase.from('sod_answers').update({ marks_awarded }).eq('id', answer_id);
+    return { error };
+  },
+
+  finalizeGrading: async (submission_id: string) => {
+    const { data: answers, error: aErr } = await supabase.from('sod_answers').select('marks_awarded').eq('submission_id', submission_id);
+    if (aErr) return { error: aErr };
+    const score = (answers ?? []).reduce((sum, a) => sum + (a.marks_awarded ?? 0), 0);
+    const { error } = await supabase.from('sod_submissions').update({ score, graded: true }).eq('id', submission_id);
+    return { error };
   },
 
   // Sermons

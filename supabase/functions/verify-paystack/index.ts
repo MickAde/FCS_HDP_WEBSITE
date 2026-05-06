@@ -81,6 +81,8 @@ Deno.serve(async (req: Request) => {
         paystack_ref: reference,
         payment_status: "paid",
         student_id: registration.student_id,
+        photo_url: registration.photo_url ?? null,
+        user_id: registration.user_id ?? null,
       }])
       .select()
       .single();

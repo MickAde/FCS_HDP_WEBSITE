@@ -1,28 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowRight, Quote, Sparkles, ChevronDown, Users, BookOpen, Loader, DollarSign
+  ArrowRight, Quote, Sparkles, ChevronDown, Users, BookOpen, Loader, DollarSign, Ticket, FileQuestion, Clock
 } from 'lucide-react';
 import { dbService, SodDepartmentRow } from '../services/dbService';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase';
 
 const SOD: React.FC = () => {
+  const { user, profile } = useAuth();
   const [departments, setDepartments] = useState<SodDepartmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [countdownTarget, setCountdownTarget] = useState<Date | null>(null);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [countdownActive, setCountdownActive] = useState(false);
+  const [exams, setExams] = useState<any[]>([]);
+  const [studentReg, setStudentReg] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
       dbService.getSodDepartments(),
       dbService.getSodSettings(),
-    ]).then(([{ data: depts }, { data: settings }]) => {
+    ]).then(async ([{ data: depts }, { data: settings }]) => {
       if (depts) setDepartments(depts);
       if (settings?.countdown_target) {
         const target = new Date(settings.countdown_target);
         if (target > new Date()) {
           setCountdownTarget(target);
           setCountdownActive(true);
+        }
+      }
+      // Load exams for student's department
+      if (user) {
+        const { data: reg } = await supabase.from('sod_registrations').select('department_id').eq('user_id', user.id).maybeSingle();
+        if (reg) {
+          setStudentReg(reg);
+          const { data: examData } = await dbService.getSodExamsByDepartment(reg.department_id);
+          if (examData) setExams(examData);
         }
       }
       setLoading(false);
@@ -150,6 +164,38 @@ const SOD: React.FC = () => {
         )}
       </section>
 
+      {/* Exams Section — only shown to registered students with published exams */}
+      {user && studentReg && exams.length > 0 && (
+        <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <span className="text-primary font-bold text-xs uppercase tracking-[0.4em] mb-4 block">Your Exams</span>
+            <h2 className="text-4xl font-poppins font-bold text-indigo-900 dark:text-white">Available Exams</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {exams.map(exam => (
+              <div key={exam.id} className="bg-white dark:bg-slate-800 rounded-[2rem] border border-gray-100 dark:border-slate-700 p-7 shadow-sm hover:shadow-lg transition-all flex flex-col gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <FileQuestion size={24} className="text-primary" />
+                </div>
+                <div className="flex-grow">
+                  <h3 className="font-bold text-indigo-900 dark:text-white text-lg mb-1">{exam.title}</h3>
+                  {exam.description && <p className="text-sm text-gray-500 dark:text-gray-400">{exam.description}</p>}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+                    <Clock size={13} /> {exam.duration_minutes} min
+                  </span>
+                  <Link to={`/sod/exam/${exam.id}`}
+                    className="flex items-center gap-1.5 bg-primary text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition">
+                    Take Exam <ArrowRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Testimonials */}
       <section className="py-24 bg-gray-50 dark:bg-slate-800/30 border-y border-gray-100 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -189,6 +235,11 @@ const SOD: React.FC = () => {
             <Link to="/sod/card" className="inline-block bg-white/10 border border-white/20 text-white px-12 py-5 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all backdrop-blur-md">
               Retrieve ID Card
             </Link>
+            {['admin', 'leader', 'registrar'].includes(profile?.role ?? '') && (
+              <Link to="/registrar/sod" className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white px-12 py-5 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all backdrop-blur-md">
+                <Ticket size={20} /> Generate Coupon
+              </Link>
+            )}
           </div>
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[100px] rounded-full -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/20 blur-[80px] rounded-full -ml-24 -mb-24" />

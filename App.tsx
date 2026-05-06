@@ -32,6 +32,7 @@ import ActivityDetail from './pages/ActivityDetail';
 import SOD from './pages/SOD';
 import SODRegister from './pages/SODRegister';
 import SODCard from './pages/SODCard';
+import SODResults from './pages/SODResults';
 import StudyBuddy from './pages/StudyBuddy';
 import Contact from './pages/Contact';
 import Login from './pages/Login';
@@ -40,6 +41,10 @@ import AdminBlog from './pages/AdminBlog';
 import AdminUnits from './pages/AdminUnits';
 import AdminActivities from './pages/AdminActivities';
 import AdminSOD from './pages/AdminSOD';
+import AdminSODExam from './pages/AdminSODExam';
+import AdminSODResults from './pages/AdminSODResults';
+import SODExam from './pages/SODExam';
+import RegistrarSOD from './pages/RegistrarSOD';
 import Footer from './components/Footer';
 
 // Fixed: Destructuring from star import to bypass named export resolution errors
@@ -59,6 +64,7 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
   const dropdownRef = useRef<HTMLDivElement>(null);
   const sodDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const { profile } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -86,6 +92,8 @@ const Navbar = ({ isDarkMode, toggleDarkMode }: { isDarkMode: boolean; toggleDar
     { name: 'School of Destiny', path: '/sod' },
     { name: 'Register for SOD', path: '/sod/register' },
     { name: 'Retrieve ID Card', path: '/sod/card' },
+    { name: 'My Results', path: '/sod/results' },
+    ...(['admin', 'leader', 'registrar'].includes(profile?.role ?? '') ? [{ name: 'Generate Coupon', path: '/registrar/sod' }] : []),
   ];
 
   const resourceLinks = [
@@ -293,6 +301,14 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const RegistrarRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, profile, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!['admin', 'leader', 'registrar'].includes(profile?.role ?? '')) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
 // Redirect logged-in users away from login/register
 const ProtectedLoginRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -358,6 +374,18 @@ const AuthButtons = () => {
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
                   <User size={16} className="text-primary" /> Manage SOD
                 </Link>
+                <Link to="/admin/sod/exams" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <User size={16} className="text-primary" /> SOD Exams
+                </Link>
+              </div>
+            )}
+            {profile?.role === 'registrar' && (
+              <div className="border-b border-gray-50 dark:border-slate-700">
+                <Link to="/registrar/sod" onClick={() => setOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-900 dark:text-white hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
+                  <User size={16} className="text-primary" /> SOD Coupons
+                </Link>
               </div>
             )}
             <button onClick={() => { signOut(); setOpen(false); }}
@@ -400,6 +428,24 @@ const MobileAuthButtons = ({ setIsOpen }: { setIsOpen: (v: boolean) => void }) =
             <p className="text-xs text-gray-400 truncate max-w-[180px]">{user.email}</p>
           </div>
         </div>
+        {(profile?.role === 'admin' || profile?.role === 'leader') && (
+          <div className="mb-2 space-y-1">
+            {[{ label: 'Manage Blog', path: '/admin/blog' }, { label: 'Manage Units', path: '/admin/units' }, { label: 'Manage Activities', path: '/admin/activities' }, { label: 'Manage SOD', path: '/admin/sod' }].map(item => (
+              <Link key={item.path} to={item.path} onClick={() => setIsOpen(false)}
+                className="block py-2 px-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-emerald-50 dark:hover:bg-emerald-950/20">
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        )}
+        {profile?.role === 'registrar' && (
+          <div className="mb-2">
+            <Link to="/registrar/sod" onClick={() => setIsOpen(false)}
+              className="block py-2 px-3 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-emerald-50 dark:hover:bg-emerald-950/20">
+              SOD Coupons
+            </Link>
+          </div>
+        )}
         <button onClick={() => { signOut(); setIsOpen(false); }}
           className="w-full flex items-center justify-center gap-2 py-3 border border-red-100 dark:border-red-900/30 text-red-500 rounded-xl font-bold text-sm">
           <LogOut size={16} /> Sign Out
@@ -457,6 +503,7 @@ const App: React.FC = () => {
             <Route path="/sod" element={<SOD />} />
             <Route path="/sod/register" element={<SODRegister />} />
             <Route path="/sod/card" element={<SODCard />} />
+            <Route path="/sod/results" element={<SODResults />} />
             <Route path="/library" element={<Library />} />
             <Route path="/sermons" element={<Sermons />} />
             <Route path="/gallery" element={<Gallery />} />
@@ -470,6 +517,10 @@ const App: React.FC = () => {
             <Route path="/admin/units" element={<AdminRoute><AdminUnits /></AdminRoute>} />
             <Route path="/admin/activities" element={<AdminRoute><AdminActivities /></AdminRoute>} />
             <Route path="/admin/sod" element={<AdminRoute><AdminSOD /></AdminRoute>} />
+            <Route path="/admin/sod/exams" element={<AdminRoute><AdminSODExam /></AdminRoute>} />
+            <Route path="/admin/sod/exams/:examId/results" element={<AdminRoute><AdminSODResults /></AdminRoute>} />
+            <Route path="/sod/exam/:examId" element={<SODExam />} />
+            <Route path="/registrar/sod" element={<RegistrarRoute><RegistrarSOD /></RegistrarRoute>} />
           </Routes>
         </main>
         <Footer />

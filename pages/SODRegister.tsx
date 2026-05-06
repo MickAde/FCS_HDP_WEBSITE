@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft, User, Mail, Phone, BookOpen, GraduationCap,
+  ArrowLeft, User, Mail, Phone, BookOpen,
   CheckCircle, Loader, Download, CreditCard, AlertCircle
 } from 'lucide-react';
 import PaystackPop from '@paystack/inline-js';
@@ -9,6 +9,7 @@ import html2canvas from 'html2canvas';
 import { dbService, SodDepartmentRow, SodRegistrationRow } from '../services/dbService';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 
 const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY ?? '';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
@@ -125,7 +126,7 @@ const IDCard: React.FC<{ reg: SodRegistrationRow; deptName: string; localPhoto?:
             <p style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', margin: 0 }}>{deptName}</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 24px' }}>
-            {[{ label: 'Full Name', value: reg.full_name }, { label: 'Level', value: reg.level }, { label: 'Faculty / Dept', value: reg.faculty_dept }, { label: 'Issue Date', value: issueDate }].map(({ label, value }) => (
+            {[{ label: 'Full Name', value: reg.full_name }, { label: 'Issue Date', value: issueDate }].map(({ label, value }) => (
               <div key={label}>
                 <p style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 2px', lineHeight: 1.2 }}>{label}</p>
                 <p style={{ fontSize: '12px', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.3, wordBreak: 'break-word', overflowWrap: 'break-word' }}>{value}</p>
@@ -156,12 +157,19 @@ const IDCard: React.FC<{ reg: SodRegistrationRow; deptName: string; localPhoto?:
 const SODRegister: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
+  const { user, loading: authLoading } = useAuth();
   const [departments, setDepartments] = useState<SodDepartmentRow[]>([]);
   const [loadingDepts, setLoadingDepts] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [alreadyRegistered, setAlreadyRegistered] = useState(false);
   const [registration, setRegistration] = useState<SodRegistrationRow | null>(null);
   const [selectedDept, setSelectedDept] = useState<SodDepartmentRow | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [couponCode, setCouponCode] = useState('');
+  const [couponValid, setCouponValid] = useState<boolean | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+  const [couponDept, setCouponDept] = useState<SodDepartmentRow | null>(null);
+  const [couponId, setCouponId] = useState<string | null>(null);
 
   const handlePhotoChange = (file: File) => {
     if (file.size > 10 * 1024 * 1024) {
@@ -194,20 +202,25 @@ const SODRegister: React.FC = () => {
     full_name: '',
     email: '',
     phone: '',
-    level: '',
-    faculty_dept: '',
   });
 
   useEffect(() => {
-    dbService.getSodDepartments().then(({ data }) => {
+    if (authLoading) return;
+    const init = async () => {
+      if (user) {
+        const { data } = await supabase.from('sod_registrations').select('id').eq('user_id', user.id).maybeSingle();
+        if (data) { setAlreadyRegistered(true); setLoadingDepts(false); return; }
+      }
+      const { data } = await dbService.getSodDepartments();
       if (data) {
         setDepartments(data);
         const preselect = searchParams.get('dept');
         if (preselect) setSelectedDept(data.find(d => d.id === preselect) ?? null);
       }
       setLoadingDepts(false);
-    });
-  }, []);
+    };
+    init();
+  }, [user, authLoading]);
 
   useEffect(() => {
     if (form.department_id) {
@@ -219,14 +232,30 @@ const SODRegister: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.department_id || !form.full_name || !form.email || !form.phone || !form.level || !form.faculty_dept) {
+    if (!form.department_id || !form.full_name || !form.email || !form.phone) {
       showToast('Please fill all fields.', 'error'); return;
     }
     if (!selectedDept) { showToast('Please select a department.', 'error'); return; }
 
     const studentId = generateStudentId();
 
-    if (selectedDept.fee > 0) {
+    // Use already-validated coupon state; only re-check if user typed a code but never clicked Validate
+    let validCoupon = false;
+    if (couponCode.trim()) {
+      if (couponValid === true) {
+        validCoupon = true;
+      } else {
+        const { data: couponData, error: couponError } = await dbService.validateSodCoupon(couponCode);
+        if (couponError || !couponData) {
+          showToast('Invalid or already used coupon code.', 'error');
+          setProcessing(false);
+          return;
+        }
+        validCoupon = true;
+      }
+    }
+
+    if (selectedDept.fee > 0 && !validCoupon) {
       if (!PAYSTACK_PUBLIC_KEY) {
         showToast('Paystack public key not configured.', 'error');
         return;
@@ -253,27 +282,29 @@ const SODRegister: React.FC = () => {
         onCancel: () => showToast('Payment cancelled.', 'info'),
       });
     } else {
-      // Free department — save directly via dbService
+      // Free department or valid coupon — save directly
       setProcessing(true);
       const uploadedPhotoUrl = await uploadPhoto(studentId);
-      console.log('uploadedPhotoUrl:', uploadedPhotoUrl);
       const payload: Omit<SodRegistrationRow, 'id' | 'created_at'> = {
         department_id: form.department_id,
         full_name: form.full_name,
         email: form.email,
         phone: form.phone,
-        level: form.level,
-        faculty_dept: form.faculty_dept,
+        level: '',
+        faculty_dept: '',
         paystack_ref: null,
         payment_status: 'paid',
         student_id: studentId,
         photo_url: uploadedPhotoUrl,
+        coupon_code: validCoupon ? couponCode.toUpperCase() : null,
+        user_id: user?.id ?? null,
       };
-      console.log('payload photo_url:', payload.photo_url);
       const { data, error } = await dbService.createSodRegistration(payload);
-      console.log('registration result:', { data, error });
       if (error) showToast(error.message ?? 'Registration failed.', 'error');
-      else if (data) setRegistration(data);
+      else if (data) {
+        if (validCoupon) await dbService.markCouponUsed(couponCode, form.email, couponId ?? undefined);
+        setRegistration(data);
+      }
       setProcessing(false);
     }
   };
@@ -295,11 +326,12 @@ const SODRegister: React.FC = () => {
             full_name: form.full_name,
             email: form.email,
             phone: form.phone,
-            level: form.level,
-            faculty_dept: form.faculty_dept,
+            level: '',
+            faculty_dept: '',
             student_id: studentId,
             expected_amount: expectedAmount,
             photo_url: uploadedPhotoUrl,
+            user_id: user?.id ?? null,
           },
         }),
       });
@@ -307,7 +339,12 @@ const SODRegister: React.FC = () => {
       if (!res.ok || !result.success) {
         showToast(result.error ?? 'Payment verification failed.', 'error');
       } else {
+        // Patch user_id from frontend since edge function may not have it
+        if (user?.id && result.data?.id) {
+          await supabase.from('sod_registrations').update({ user_id: user.id }).eq('id', result.data.id);
+        }
         setRegistration(result.data);
+        if (couponCode.trim() && couponValid) await dbService.markCouponUsed(couponCode, form.email, couponId ?? undefined);
       }
     } catch (err) {
       showToast(`Network error: ${String(err)}`, 'error');
@@ -342,6 +379,31 @@ const SODRegister: React.FC = () => {
     );
   }
 
+  if (authLoading || (user && loadingDepts && !alreadyRegistered && !registration)) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <Loader size={32} className="animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (alreadyRegistered) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center px-4 bg-gray-50 dark:bg-slate-900">
+        <div className="max-w-md w-full text-center bg-white dark:bg-slate-800 p-12 rounded-[3rem] shadow-2xl border border-gray-100 dark:border-slate-700">
+          <div className="w-20 h-20 bg-amber-50 dark:bg-amber-950/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle size={40} />
+          </div>
+          <h2 className="text-2xl font-poppins font-bold text-indigo-900 dark:text-white mb-3">Already Registered</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-8">You have already registered for SOD this session. You can retrieve your ID card below.</p>
+          <Link to="/sod/card" className="block w-full bg-primary text-white font-bold py-4 rounded-2xl hover:opacity-90 transition">
+            Retrieve ID Card
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gray-50 dark:bg-slate-900 min-h-screen pb-24 transition-colors">
       <section className="bg-indigo-900 dark:bg-slate-950 py-16 text-white text-center relative overflow-hidden">
@@ -359,12 +421,60 @@ const SODRegister: React.FC = () => {
         <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden border border-gray-100 dark:border-slate-700 transition-colors">
           <div className="p-8 md:p-10 space-y-8">
 
+            {/* Coupon Code */}
+            <div className="space-y-3">
+              <h3 className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs">
+                <CreditCard size={16} /> Coupon Code
+              </h3>
+              <input
+                type="text"
+                value={couponCode}
+                onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponValid(null); }}
+                className="w-full bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary dark:text-white uppercase"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!couponCode.trim()) { showToast('Enter a coupon code.', 'error'); return; }
+                  setCouponChecking(true);
+                  const { data, error } = await dbService.validateSodCoupon(couponCode);
+                  setCouponChecking(false);
+                  if (error || !data) {
+                    setCouponValid(false);
+                    setCouponDept(null);
+                    showToast('Invalid or already used coupon.', 'error');
+                  } else {
+                    setCouponValid(true);
+                    setCouponDept(data.sod_departments as SodDepartmentRow);
+                    setCouponId(data.id);
+                    setForm(f => ({ ...f, department_id: data.department_id }));
+                    setSelectedDept(data.sod_departments as SodDepartmentRow);
+                    showToast(`Coupon valid! Department: ${data.sod_departments.name}`, 'success');
+                  }
+                }}
+                disabled={couponChecking || !couponCode}
+                className="w-full py-3 rounded-xl text-sm font-bold border-2 border-primary text-primary hover:bg-primary hover:text-white transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {couponChecking ? <><Loader size={16} className="animate-spin" /> Validating...</> : 'Validate Coupon'}
+              </button>
+              {couponValid === true && couponDept && <p className="text-emerald-600 text-xs font-bold flex items-center gap-1"><CheckCircle size={13} /> Valid — {couponDept.name} (payment waived)</p>}
+              {couponValid === false && <p className="text-red-500 text-xs font-bold">✗ Invalid or already used</p>}
+            </div>
+
             {/* Department Selection */}
             <div className="space-y-4">
               <h3 className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs">
                 <BookOpen size={16} /> Select Department
               </h3>
-              {loadingDepts ? (
+              {couponValid && couponDept ? (
+                <div className="flex items-center gap-4 p-4 rounded-2xl border-2 border-primary bg-emerald-50 dark:bg-emerald-950/20">
+                  <CheckCircle size={18} className="text-primary flex-shrink-0" />
+                  <div className="flex-grow">
+                    <p className="font-bold text-indigo-900 dark:text-white text-sm">{couponDept.name}</p>
+                    <p className="text-xs text-primary font-bold">Auto-selected via coupon — Free</p>
+                  </div>
+                </div>
+              ) : loadingDepts ? (
                 <div className="flex items-center justify-center py-8"><Loader size={24} className="animate-spin text-primary" /></div>
               ) : departments.length === 0 ? (
                 <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-100 dark:border-amber-900/50 text-amber-700 dark:text-amber-400 text-sm">
@@ -417,6 +527,8 @@ const SODRegister: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Personal Details */}
             <div className="space-y-4">
               <h3 className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs">
                 <User size={16} /> Personal Details
@@ -452,37 +564,14 @@ const SODRegister: React.FC = () => {
               </div>
             </div>
 
-            {/* Academic Details */}
-            <div className="space-y-4">
-              <h3 className="flex items-center gap-2 text-primary font-bold uppercase tracking-wider text-xs">
-                <GraduationCap size={16} /> Academic Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5">Level *</label>
-                  <select required value={form.level} onChange={e => setForm(f => ({ ...f, level: e.target.value }))}
-                    className="w-full px-4 py-3.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white appearance-none">
-                    <option value="">Select Level</option>
-                    {['100L', '200L', '300L', '400L', '500L'].map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5">Faculty / Department *</label>
-                  <div className="relative">
-                    <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input required type="text" value={form.faculty_dept} onChange={e => setForm(f => ({ ...f, faculty_dept: e.target.value }))}
-                      placeholder="e.g. Computer Science"
-                      className="w-full pl-11 pr-4 py-3.5 bg-gray-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:text-white" />
-                  </div>
-                </div>
-              </div>
-            </div>
+
+
           </div>
 
           {/* Footer */}
           <div className="p-8 md:p-10 bg-gray-50 dark:bg-slate-900/50 border-t border-gray-100 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-6">
             <div>
-              {selectedDept && selectedDept.fee > 0 ? (
+              {selectedDept && selectedDept.fee > 0 && !couponValid ? (
                 <div className="flex items-center gap-2 text-sm font-bold text-indigo-900 dark:text-white">
                   <CreditCard size={16} className="text-primary" />
                   You will be charged <span className="text-primary">₦{selectedDept.fee.toLocaleString()}</span> via Paystack
@@ -491,11 +580,11 @@ const SODRegister: React.FC = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400">Your unique ID card will be generated after registration.</p>
               )}
             </div>
-            <button type="submit" disabled={processing || loadingDepts || departments.length === 0}
+            <button type="submit" disabled={processing || loadingDepts || (departments.length === 0 && !couponValid)}
               className="w-full md:w-auto min-w-[200px] flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-2xl font-bold shadow-xl transition-all hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed">
               {processing
                 ? <><Loader size={18} className="animate-spin" /> Processing...</>
-                : selectedDept && selectedDept.fee > 0
+                : selectedDept && selectedDept.fee > 0 && !couponValid
                 ? <><CreditCard size={18} /> Pay & Register</>
                 : 'Complete Registration'
               }
