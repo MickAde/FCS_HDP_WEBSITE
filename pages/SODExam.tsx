@@ -8,7 +8,6 @@ import { supabase } from '../lib/supabase';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? '';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
-const MAX_VIOLATIONS = 3;
 
 const SODExam: React.FC = () => {
   const { examId } = useParams<{ examId: string }>();
@@ -28,183 +27,243 @@ const SODExam: React.FC = () => {
   const [studentReg, setStudentReg] = useState<any>(null);
   const [accessDenied, setAccessDenied] = useState(false);
   const [violations, setViolations] = useState(0);
-  const [showWarning, setShowWarning] = useState(false);
   const [warningMsg, setWarningMsg] = useState('');
+  const [showWarning, setShowWarning] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
-  const [screenReady, setScreenReady] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
-  const violationsRef = useRef(0);
   const answersRef = useRef<Record<string, string>>({});
   const submissionRef = useRef<any>(null);
+  const violationsRef = useRef(0);
+  const submitExamRef = useRef<((id: string, ans: Record<string, string>) => void) | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
-  const screenStreamRef = useRef<MediaStream | null>(null);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => { answersRef.current = answers; }, [answers]);
   useEffect(() => { submissionRef.current = submission; }, [submission]);
-
-  useEffect(() => {
-    if (!user || !examId) return;
-    const init = async () => {
-      setLoading(true);
-      const { data: reg } = await supabase.from('sod_registrations').select('*, sod_departments(*)').eq('user_id', user.id).maybeSingle();
-      if (!reg) { setAccessDenied(true); setLoading(false); return; }
-      setStudentReg(reg);
-      const { data: examData } = await dbService.getSodExam(examId);
-      if (!examData || !examData.is_published) { setAccessDenied(true); setLoading(false); return; }
-      if (examData.department_id !== reg.department_id) { setAccessDenied(true); setLoading(false); return; }
-      setExam(examData);
-      const { data: existingSub } = await dbService.getMySubmission(examId, user.id);
-      if (existingSub) {
-        setSubmission(existingSub);
-        if (existingSub.submitted_at) { setSubmitted(true); setLoading(false); return; }
-        const { data: qs } = await dbService.getSodQuestions(examId);
-        setQuestions(qs ?? []);
-        const elapsed = Math.floor((Date.now() - new Date(existingSub.started_at).getTime()) / 1000);
-        const remaining = examData.duration_minutes * 60 - elapsed;
-        if (remaining <= 0) { await submitExam(existingSub.id, {}); return; }
-        setTimeLeft(remaining);
-      }
-      setLoading(false);
-    };
-    init();
-  }, [user, examId]);
-
-  useEffect(() => {
-    if (!submission || submitted || timeLeft <= 0) return;
-    timerRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) { clearInterval(timerRef.current!); if (!submittingRef.current) submitExam(submission.id, answers); return 0; }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timerRef.current!);
-  }, [submission, submitted]);
 
   const submitExam = useCallback(async (submissionId: string, currentAnswers: Record<string, string>) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
     setSubmitting(true);
     clearInterval(timerRef.current!);
-    const answerPayload = Object.entries(currentAnswers).map(([question_id, answer]) => ({ question_id, answer }));
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/grade-exam`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
-      body: JSON.stringify({ submission_id: submissionId, answers: answerPayload }),
-    });
-    const result = await res.json();
-    if (!res.ok || !result.success) { showToast(result.error ?? 'Submission failed. Please try again.', 'error'); submittingRef.current = false; setSubmitting(false); }
-    else { setSubmitted(true); setSubmitting(false); }
-  }, []);
 
-  const triggerViolation = useCallback((msg: string) => {
-    violationsRef.current += 1;
-    setViolations(violationsRef.current);
-    setWarningMsg(msg);
-    setShowWarning(true);
-    setTimeout(() => setShowWarning(false), 4000);
-    if (violationsRef.current >= MAX_VIOLATIONS) {
-      const sub = submissionRef.current;
-      if (sub && !submittingRef.current) submitExam(sub.id, answersRef.current);
+    try {
+      const answerPayload = Object.entries(currentAnswers).map(([question_id, answer]) => ({
+        question_id,
+        answer: answer || '',
+      }));
+
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/grade-exam`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ submission_id: submissionId, answers: answerPayload }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+
+      const result = await res.json();
+      if (!result.success) throw new Error(result.error || 'Grading failed');
+
+      setSubmitted(true);
+      setSubmitting(false);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      showToast(`Submission failed: ${msg}. Please try again.`, 'error');
+      submittingRef.current = false;
+      setSubmitting(false);
     }
-  }, [submitExam]);
+  }, [showToast]);
 
-  // Start camera + screen when exam begins
+  // Keep submitExamRef in sync so anti-cheat can call it without circular deps
+  useEffect(() => { submitExamRef.current = submitExam; }, [submitExam]);
+
+  // Start camera for monitoring display (not recording anything)
   useEffect(() => {
     if (!submission || submitted) return;
-
-    const startMedia = async () => {
+    const startCamera = async () => {
       try {
-        // Camera
-        const camStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        cameraStreamRef.current = camStream;
-        if (cameraVideoRef.current) cameraVideoRef.current.srcObject = camStream;
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        cameraStreamRef.current = stream;
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = stream;
+          cameraVideoRef.current.play();
+        }
         setCameraReady(true);
-        camStream.getVideoTracks()[0].onended = () => triggerViolation('Camera was stopped! This is a violation.');
       } catch {
-        setMediaError('Camera access denied. Camera is required to take this exam.');
-        triggerViolation('Camera access denied!');
-      }
-
-      try {
-        // Screen recording (no save — just active as deterrent)
-        const screenStream = await (navigator.mediaDevices as any).getDisplayMedia({ video: true, audio: false });
-        screenStreamRef.current = screenStream;
-        setScreenReady(true);
-        screenStream.getVideoTracks()[0].onended = () => triggerViolation('Screen sharing was stopped! This is a violation.');
-      } catch {
-        triggerViolation('Screen sharing denied or stopped!');
+        setCameraReady(false);
       }
     };
-
-    startMedia();
-
+    startCamera();
     return () => {
       cameraStreamRef.current?.getTracks().forEach(t => t.stop());
-      screenStreamRef.current?.getTracks().forEach(t => t.stop());
+      setCameraReady(false);
     };
   }, [submission, submitted]);
 
-  // Stop all media on submit
-  const stopMedia = useCallback(() => {
-    cameraStreamRef.current?.getTracks().forEach(t => t.stop());
-    screenStreamRef.current?.getTracks().forEach(t => t.stop());
-    setCameraReady(false);
-    setScreenReady(false);
-  }, []);
-
-  // Anti-cheat guards — only active during exam
+  // Anti-cheat: tab switch, window blur, right-click, keyboard shortcuts
+  // Only active while exam is in progress (submission exists and not submitted)
   useEffect(() => {
     if (!submission || submitted) return;
 
-    const onVisibility = () => { if (document.hidden) triggerViolation('Tab switching detected!'); };
-    const onBlur = () => triggerViolation('Leaving the exam window is not allowed!');
-    const onContextMenu = (e: MouseEvent) => e.preventDefault();
-    const onSelectStart = (e: Event) => e.preventDefault();
+    const MAX_VIOLATIONS = 3;
+    let blurTimer: ReturnType<typeof setTimeout> | null = null;
+    let visTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const triggerViolation = (msg: string) => {
+      // Debounce: ignore if last violation was less than 3s ago
+      const now = Date.now();
+      const last = parseInt(sessionStorage.getItem('lastViolation') || '0');
+      if (now - last < 3000) return;
+      sessionStorage.setItem('lastViolation', String(now));
+
+      violationsRef.current += 1;
+      setViolations(violationsRef.current);
+      setWarningMsg(msg);
+      setShowWarning(true);
+      setTimeout(() => setShowWarning(false), 4000);
+
+      if (violationsRef.current >= MAX_VIOLATIONS) {
+        const sub = submissionRef.current;
+        if (sub && !submittingRef.current && submitExamRef.current) {
+          showToast('Maximum violations reached. Auto-submitting exam.', 'error');
+          setTimeout(() => submitExamRef.current!(sub.id, answersRef.current), 1500);
+        }
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        visTimer = setTimeout(() => triggerViolation('Tab switching detected!'), 2000);
+      } else {
+        if (visTimer) { clearTimeout(visTimer); visTimer = null; }
+      }
+    };
+
+    const onBlur = () => {
+      blurTimer = setTimeout(() => triggerViolation('Leaving the exam window is not allowed!'), 3000);
+    };
+
+    const onFocus = () => {
+      if (blurTimer) { clearTimeout(blurTimer); blurTimer = null; }
+    };
+
+    const onContextMenu = (e: MouseEvent) => { e.preventDefault(); };
+
     const onKeyDown = (e: KeyboardEvent) => {
       const blocked =
         (e.ctrlKey && ['c', 'v', 'a', 'u', 's', 'p'].includes(e.key.toLowerCase())) ||
         e.key === 'F12' || e.key === 'PrintScreen' ||
         (e.altKey && e.key === 'Tab') ||
-        e.metaKey;
-      if (blocked) { e.preventDefault(); triggerViolation('Keyboard shortcut blocked!'); }
+        (e.metaKey && ['c', 'v', 'a'].includes(e.key.toLowerCase()));
+      if (blocked) {
+        e.preventDefault();
+        triggerViolation(`Shortcut blocked: ${e.key}`);
+      }
     };
 
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
     document.addEventListener('contextmenu', onContextMenu);
-    document.addEventListener('selectstart', onSelectStart);
     document.addEventListener('keydown', onKeyDown);
 
     return () => {
+      if (blurTimer) clearTimeout(blurTimer);
+      if (visTimer) clearTimeout(visTimer);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
       document.removeEventListener('contextmenu', onContextMenu);
-      document.removeEventListener('selectstart', onSelectStart);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [submission, submitted, triggerViolation]);
+  }, [submission, submitted, showToast]);
+
+  useEffect(() => {
+    if (!user || !examId) return;
+    const init = async () => {
+      setLoading(true);
+      try {
+        const { data: reg } = await supabase
+          .from('sod_registrations')
+          .select('*, sod_departments(*)')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!reg) { setAccessDenied(true); setLoading(false); return; }
+        setStudentReg(reg);
+
+        const { data: examData } = await dbService.getSodExam(examId);
+        if (!examData || !examData.is_published || examData.department_id !== reg.department_id) {
+          setAccessDenied(true); setLoading(false); return;
+        }
+        setExam(examData);
+
+        const { data: existingSub } = await dbService.getMySubmission(examId, user.id);
+        if (existingSub) {
+          setSubmission(existingSub);
+          if (existingSub.submitted_at) { setSubmitted(true); setLoading(false); return; }
+          const { data: qs } = await dbService.getSodQuestions(examId);
+          setQuestions(qs ?? []);
+          const elapsed = Math.floor((Date.now() - new Date(existingSub.started_at).getTime()) / 1000);
+          const remaining = examData.duration_minutes * 60 - elapsed;
+          if (remaining <= 0) { submitExam(existingSub.id, {}); return; }
+          setTimeLeft(remaining);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        showToast('Failed to load exam. Please refresh and try again.', 'error');
+        setLoading(false);
+      }
+    };
+    init();
+  }, [user, examId, submitExam, showToast]);
+
+  useEffect(() => {
+    if (!submission || submitted || timeLeft <= 0) return;
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current!);
+          if (!submittingRef.current) submitExam(submissionRef.current.id, answersRef.current);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current!);
+  }, [submission, submitted, submitExam]);
 
   const handleStart = async () => {
     if (!user || !exam || !studentReg) return;
     setStarting(true);
-    const { data: sub, error } = await dbService.startExam(exam.id, user.id, studentReg.student_id);
-    if (error) { showToast('Failed to start exam.', 'error'); setStarting(false); return; }
-    const { data: qs } = await dbService.getSodQuestions(exam.id);
-    setQuestions(qs ?? []);
-    setSubmission(sub);
-    setTimeLeft(exam.duration_minutes * 60);
+    try {
+      const { data: sub, error } = await dbService.startExam(exam.id, user.id, studentReg.student_id);
+      if (error || !sub) { showToast('Failed to start exam. Please try again.', 'error'); setStarting(false); return; }
+      const { data: qs } = await dbService.getSodQuestions(exam.id);
+      setQuestions(qs ?? []);
+      setSubmission(sub);
+      setTimeLeft(exam.duration_minutes * 60);
+    } catch {
+      showToast('Failed to start exam. Please try again.', 'error');
+    }
     setStarting(false);
   };
 
   const handleSubmitExam = () => {
     const unanswered = questions.length - answeredCount;
-    if (unanswered === questions.length) { showToast('Please answer at least one question before submitting.', 'error'); return; }
+    if (answeredCount === 0) { showToast('Please answer at least one question before submitting.', 'error'); return; }
     if (unanswered > 0 && !confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) return;
-    stopMedia();
+    cameraStreamRef.current?.getTracks().forEach(t => t.stop());
     submitExam(submission.id, answers);
   };
 
@@ -212,7 +271,6 @@ const SODExam: React.FC = () => {
   const answeredCount = Object.keys(answers).filter(k => answers[k]?.trim()).length;
   const currentQ = questions[currentIdx];
   const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0;
-  const violationsLeft = MAX_VIOLATIONS - violations;
 
   if (!user) return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 flex items-center justify-center px-4">
@@ -304,14 +362,15 @@ const SODExam: React.FC = () => {
               {[
                 'Do NOT switch tabs or leave this window.',
                 'Do NOT right-click or use keyboard shortcuts (Ctrl+C, Ctrl+V, F12, etc.).',
-                'Do NOT copy or paste any content.',
-                'Your camera and screen will be active throughout the exam.',
-                `${MAX_VIOLATIONS} violations will auto-submit your exam immediately.`,
+                'Your camera feed and screen are being monitored throughout the exam.',
+                '3 violations will auto-submit your exam immediately.',
               ].map((r, i) => <p key={i} className="flex items-start gap-1.5 mt-1"><span>•</span>{r}</p>)}
             </div>
           </div>
           <div className="p-8 pt-4">
-            <button onClick={handleStart} disabled={starting}
+            <button
+              onClick={handleStart}
+              disabled={starting}
               className="w-full flex items-center justify-center gap-2 bg-primary text-white py-4 rounded-2xl font-bold hover:opacity-90 transition disabled:opacity-60 shadow-xl shadow-emerald-900/20">
               {starting ? <><Loader size={18} className="animate-spin" /> Starting...</> : <><BookOpen size={18} /> I Understand — Start Exam</>}
             </button>
@@ -323,34 +382,40 @@ const SODExam: React.FC = () => {
 
   // Exam in progress
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-32 transition-colors select-none">
-      {/* Floating camera preview */}
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-900 pb-32 transition-colors">
+
+      {/* Floating monitoring panel */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-        <div className={`relative w-36 h-28 rounded-2xl overflow-hidden border-2 shadow-2xl transition-all ${cameraReady ? 'border-emerald-500' : 'border-red-500 bg-slate-900'}`}>
-          <video ref={cameraVideoRef} autoPlay muted playsInline className="w-full h-full object-cover scale-x-[-1]" />
+        {/* Camera feed */}
+        <div className={`relative w-36 h-28 rounded-2xl overflow-hidden border-2 shadow-2xl ${cameraReady ? 'border-emerald-500' : 'border-red-500'}`}>
+          <video ref={cameraVideoRef} autoPlay muted playsInline className="w-full h-full object-cover scale-x-[-1] bg-slate-900" />
           {!cameraReady && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
-              <Camera size={20} className="text-red-400" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
+              <Camera size={20} className="text-red-400 mb-1" />
+              <span className="text-[10px] text-red-400 font-bold">No Camera</span>
             </div>
           )}
-          <div className={`absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${cameraReady ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'}`}>
-            <div className={`w-1.5 h-1.5 rounded-full ${cameraReady ? 'bg-white animate-pulse' : 'bg-white'}`} />
-            {cameraReady ? 'LIVE' : 'OFF'}
+          {/* LIVE badge */}
+          <div className="absolute top-2 left-2 flex items-center gap-1 bg-red-600/90 text-white px-2 py-0.5 rounded-full text-[10px] font-bold">
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            LIVE
           </div>
         </div>
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg ${screenReady ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'}`}>
-          <Monitor size={12} />{screenReady ? 'Screen Active' : 'Screen Off'}
+        {/* Screen recording indicator */}
+        <div className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
+          <Monitor size={12} />
+          <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          Screen Recording
         </div>
       </div>
+
       {/* Violation warning toast */}
       {showWarning && (
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 max-w-sm w-[calc(100%-2rem)]">
           <EyeOff size={20} className="flex-shrink-0" />
           <div>
             <p className="font-bold text-sm">{warningMsg}</p>
-            <p className="text-xs text-red-200 mt-0.5">
-              {violationsLeft > 0 ? `${violationsLeft} warning(s) left before auto-submit.` : 'Submitting your exam now...'}
-            </p>
+            <p className="text-xs text-red-200 mt-0.5">{3 - violations} warning(s) left before auto-submit.</p>
           </div>
         </div>
       )}
@@ -366,7 +431,7 @@ const SODExam: React.FC = () => {
             {violations > 0 && (
               <div className="flex items-center gap-1.5 bg-red-500/20 border border-red-400/30 px-3 py-1 rounded-full">
                 <Shield size={12} className="text-red-300" />
-                <span className="text-xs font-bold text-red-300">{violations}/{MAX_VIOLATIONS}</span>
+                <span className="text-xs font-bold text-red-300">{violations}/3</span>
               </div>
             )}
             <div className="text-right hidden sm:block">
@@ -429,9 +494,6 @@ const SODExam: React.FC = () => {
                 <input type="text"
                   value={answers[currentQ.id] ?? ''}
                   onChange={e => setAnswers(a => ({ ...a, [currentQ.id]: e.target.value }))}
-                  onCopy={e => e.preventDefault()}
-                  onPaste={e => e.preventDefault()}
-                  onCut={e => e.preventDefault()}
                   placeholder="Type your answer here..."
                   className="w-full bg-gray-50 dark:bg-slate-900 border-2 border-gray-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-primary dark:text-white transition-colors" />
               )}
@@ -440,9 +502,6 @@ const SODExam: React.FC = () => {
                 <textarea
                   value={answers[currentQ.id] ?? ''}
                   onChange={e => setAnswers(a => ({ ...a, [currentQ.id]: e.target.value }))}
-                  onCopy={e => e.preventDefault()}
-                  onPaste={e => e.preventDefault()}
-                  onCut={e => e.preventDefault()}
                   placeholder="Write your detailed answer here..." rows={8}
                   className="w-full bg-gray-50 dark:bg-slate-900 border-2 border-gray-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-primary dark:text-white resize-none transition-colors" />
               )}

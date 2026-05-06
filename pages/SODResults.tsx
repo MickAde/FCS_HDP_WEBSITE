@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader, CheckCircle, XCircle, Clock, AlertCircle, FileQuestion, ArrowRight, Sparkles } from 'lucide-react';
+import { Loader, CheckCircle, XCircle, Clock, AlertCircle, FileQuestion, ArrowRight, Sparkles, BookOpen } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { dbService } from '../services/dbService';
 
 const SODResults: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [results, setResults] = useState<any[]>([]);
+  const [availableExams, setAvailableExams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) { setLoading(false); return; }
     const fetch = async () => {
-      const { data } = await supabase
-        .from('sod_submissions')
-        .select('*, sod_exams(title, pass_mark, results_visible)')
-        .eq('user_id', user.id)
-        .not('submitted_at', 'is', null)
-        .order('created_at', { ascending: false });
-      setResults(data ?? []);
+      // Get student registration
+      const { data: reg } = await supabase.from('sod_registrations').select('department_id').eq('user_id', user.id).maybeSingle();
+
+      const [submissionsRes, examsRes] = await Promise.all([
+        supabase.from('sod_submissions').select('*, sod_exams(title, pass_mark, results_visible)').eq('user_id', user.id).not('submitted_at', 'is', null).order('created_at', { ascending: false }),
+        reg ? dbService.getSodExamsByDepartment(reg.department_id) : Promise.resolve({ data: [] }),
+      ]);
+
+      const submissions = submissionsRes.data ?? [];
+      const exams = examsRes.data ?? [];
+
+      // Exams not yet taken
+      const takenExamIds = new Set(submissions.map((s: any) => s.exam_id));
+      setAvailableExams(exams.filter((e: any) => !takenExamIds.has(e.id)));
+      setResults(submissions);
       setLoading(false);
     };
     fetch();
