@@ -66,7 +66,7 @@ const SOD: React.FC = () => {
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-indigo-950 dark:bg-slate-950">
         <div className="absolute inset-0 z-0">
           <img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
-            alt="SOD" className="w-full h-full object-cover opacity-20 scale-110" />
+            alt="SOD" className="w-full h-full object-cover opacity-40 scale-110" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-950/60 to-indigo-950 dark:via-slate-950/60 dark:to-slate-950" />
         </div>
         <div className="max-w-5xl mx-auto px-4 relative z-10 text-center">

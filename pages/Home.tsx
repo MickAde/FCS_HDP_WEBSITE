@@ -37,7 +37,7 @@ const HERO_IMAGES = [
 
 const FeatureCard = ({ icon: Icon, title, description, link, bgImage }: any) => (
   <div className="group relative bg-white dark:bg-slate-800 p-8 rounded-3xl border border-gray-100 dark:border-slate-700 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col overflow-hidden">
-    <div className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-500">
+    <div className="absolute inset-0 opacity-0 group-hover:opacity-3 transition-opacity duration-500">
       <img src={bgImage} alt="" className="w-full h-full object-cover" />
     </div>
     <div className="relative z-10">
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
             <div
               key={img}
               className={`absolute inset-0 transition-opacity duration-1000 ease-in-out bg-cover bg-center mix-blend-overlay ${
-                idx === currentBgIndex ? 'opacity-40' : 'opacity-0'
+                idx === currentBgIndex ? 'opacity-60' : 'opacity-0'
               }`}
               style={{ backgroundImage: `url('${img}')` }}
             />
